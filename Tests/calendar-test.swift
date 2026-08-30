@@ -218,20 +218,24 @@ struct CalendarTests {
     static func countdownStrings() {
         let start = at(60)
         expect(
-            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(-240)) == "in 4 min",
+            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(-240))
+                == .upcoming(minutes: 4),
             "four minutes out reads as in 4 min")
         expect(
-            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(-60)) == "in 1 min",
+            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(-60))
+                == .upcoming(minutes: 1),
             "one minute out reads as in 1 min")
         expect(
-            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(-1)) == "in 1 min",
+            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(-1))
+                == .upcoming(minutes: 1),
             "a partial minute rounds up rather than reading as now")
-        expect(UpcomingWindow.countdown(to: start, now: start) == "now", "the start reads as now")
+        expect(UpcomingWindow.countdown(to: start, now: start) == .now, "the start reads as now")
         expect(
-            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(59)) == "now",
+            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(59)) == .now,
             "the first minute after the start still reads as now")
         expect(
-            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(120)) == "2 min ago",
+            UpcomingWindow.countdown(to: start, now: start.addingTimeInterval(120))
+                == .elapsed(minutes: 2),
             "past the start it counts up")
     }
 

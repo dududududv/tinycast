@@ -118,7 +118,7 @@ private struct PopoverMenuRow: View {
                 case .file(let path):
                     MenuFileIcon(path: path)
                 }
-                Text(item.title)
+                Text(item.title.localized)
                     .font(Theme.Typography.menuRow)
                     .foregroundStyle(item.isDestructive ? Color.red : Color.primary)
                 Spacer(minLength: Theme.Spacing.sm)

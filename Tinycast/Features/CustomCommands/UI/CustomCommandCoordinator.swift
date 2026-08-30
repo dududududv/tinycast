@@ -101,7 +101,7 @@ final class CustomCommandCoordinator {
             guard outcome != .success else {
                 // On finish, not start, so a slow command confirms late rather than early.
                 if command.showsConfirmation {
-                    core.showMessage("Ran \(command.name)")
+                    core.showMessage(String(localized: "Ran \(command.name)"))
                 }
                 return
             }
@@ -145,7 +145,7 @@ final class CustomCommandCoordinator {
         }
         guard
             await core.reportFailure(
-                title: "“\(command.name)” Failed", message: message,
+                title: String(localized: "“\(command.name)” Failed"), message: message,
                 symbol: CustomCommand.sfSymbol,
                 recovery: suggestsShellEnvironment ? "Open Settings…" : nil)
         else { return }

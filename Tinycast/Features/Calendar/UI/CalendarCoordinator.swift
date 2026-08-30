@@ -222,7 +222,7 @@ final class CalendarCoordinator {
                     symbol: "calendar.badge.exclamationmark", recovery: nil)
                 return
             }
-            core.showMessage("Event created")
+            core.showMessage("Event created".localized)
         }
     }
 
@@ -270,8 +270,8 @@ final class CalendarCoordinator {
             NSApp.activate(ignoringOtherApps: true)
             guard
                 await core.confirm(
-                    title: "Join \(meeting.title)?",
-                    message: UpcomingWindow.countdown(to: meeting.start, now: Date()),
+                    title: String(localized: "Join \(meeting.title)?"),
+                    message: UpcomingWindow.countdown(to: meeting.start, now: Date()).localizedText,
                     symbol: link.provider.sfSymbol, confirmTitle: "Join", tone: .neutral,
                     confirmRole: .standard, dismissTitle: "Not Now")
             else { return }
@@ -279,7 +279,8 @@ final class CalendarCoordinator {
         if MeetingLauncher.join(link) { return }
         _ = await core.reportFailure(
             title: "Couldn't open the meeting link",
-            message: "Nothing on this Mac would open \(link.url.absoluteString).",
+            message: String(
+                localized: "Nothing on this Mac would open \(link.url.absoluteString)."),
             symbol: "video.slash", recovery: nil)
     }
 
@@ -290,7 +291,7 @@ final class CalendarCoordinator {
         }
         paletteCoordinator.hidePalette(restoreFocus: false)
         Paster.copyPlainText(link.url.absoluteString)
-        core.showMessage("Meeting link copied")
+        core.showMessage("Meeting link copied".localized)
     }
 
     func openInCalendar(_ meeting: MeetingEvent) {
@@ -305,6 +306,6 @@ final class CalendarCoordinator {
     /// A miss is transient, so it reports through the HUD rather than a dialog needing dismissal.
     private func report(_ message: String) {
         paletteCoordinator.hidePalette(restoreFocus: false)
-        core.showMessage(message, tone: .neutral)
+        core.showMessage(message.localized, tone: .neutral)
     }
 }

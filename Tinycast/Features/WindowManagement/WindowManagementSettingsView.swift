@@ -59,7 +59,7 @@ struct WindowManagementSettingsView: View {
                     WindowCommandSettingsRow(command: command)
                 }
             } header: {
-                Text(section.group.title)
+                Text(section.group.title.localized)
             }
         }
     }

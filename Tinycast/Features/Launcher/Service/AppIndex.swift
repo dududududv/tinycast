@@ -92,11 +92,18 @@ struct AppEntry: Identifiable, Hashable, Sendable {
 
     var searchFields: SearchFields {
         SearchFields(
-            names: [name] + matchAliases, alternateNames: alternateNames,
+            names: [name, displayName] + matchAliases, alternateNames: alternateNames,
             bundleID: bundleID, executableName: executableName)
     }
 
-    var kindLabel: String { labelOverride ?? kind.descriptor.label }
+    var displayName: String {
+        switch kind {
+        case .command, .systemAction, .windowCommand: name.localized
+        default: name
+        }
+    }
+
+    var displayKindLabel: String { labelOverride ?? kind.descriptor.label.localized }
 
     /// The hotkey action for this entry, or nil when the entry has no addressable action.
     var hotKeyAction: HotKeyAction? {

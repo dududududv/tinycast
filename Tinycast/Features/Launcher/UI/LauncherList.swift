@@ -204,7 +204,7 @@ private struct AppRow: View {
                             .offset(y: 3)
                     }
                 }
-            Text(app.name)
+            Text(app.displayName)
                 .font(Theme.Typography.rowTitle)
                 .lineLimit(1)
             if let alias = aliases.alias(for: app.preferenceKey) {
@@ -233,7 +233,7 @@ private struct AppRow: View {
                     KeyCapChip(text: String(slot), style: .outline)
                 }
             } else {
-                Text(app.kindLabel)
+                Text(app.displayKindLabel)
                     .font(Theme.Typography.rowTrailing)
                     .foregroundStyle(.secondary)
             }

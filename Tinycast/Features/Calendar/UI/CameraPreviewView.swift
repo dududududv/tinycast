@@ -39,7 +39,7 @@ struct CameraPreviewView: View {
     private func unavailable(_ message: String) -> some View {
         VStack(spacing: Theme.Spacing.md) {
             SymbolImage(name: "video.slash", size: Theme.Size.dialogIcon)
-            Text(message)
+            Text(message.localized)
                 .font(Theme.Typography.rowTrailing)
                 .multilineTextAlignment(.center)
         }
@@ -54,7 +54,7 @@ struct CameraPreviewView: View {
                 Text(meeting.title)
                     .font(Theme.Typography.rowTitle)
                     .lineLimit(1)
-                Text(UpcomingWindow.countdown(to: meeting.start, now: now))
+                Text(UpcomingWindow.countdown(to: meeting.start, now: now).localizedText)
                     .font(Theme.Typography.rowTrailing)
                     .foregroundStyle(Theme.Colors.textSecondary)
             }
@@ -99,7 +99,7 @@ private struct PreviewButton: View {
 
     var body: some View {
         Button(action: onActivate) {
-            Text(title)
+            Text(title.localized)
                 .font(Theme.Typography.bar)
                 .foregroundStyle(
                     role == .cancel ? Theme.Colors.textSecondary : Theme.Colors.textPrimary

@@ -50,9 +50,9 @@ struct OnboardingView: View {
         VStack(spacing: Theme.Spacing.md) {
             heroMark
             VStack(spacing: Theme.Spacing.xs) {
-                Text(title)
+                Text(title.localized)
                     .font(.title2.weight(.bold))
-                Text(subtitle)
+                Text(subtitle.localized)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

@@ -61,12 +61,18 @@ final class UninstallCoordinator {
         Task {
             let running = plan.isTargetRunning || runningApps.isRunning(app)
             let size = MeasuredSize(bytes: items.reduce(0) { $0 + ($1.size?.bytes ?? 0) }).formatted
-            let count = items.count == 1 ? "1 item" : "\(items.count) items"
+            let count =
+                items.count == 1
+                ? "1 item".localized : String(localized: "\(items.count) items")
+            let runningSuffix =
+                running ? String(localized: " \(app.name) will quit first.") : ""
             guard
                 await core.confirm(
-                    title: "Uninstall “\(app.name)”?",
-                    message: "\(count) (\(size)) will be moved to the Trash, where you can put them "
-                        + "back." + (running ? " \(app.name) will quit first." : ""),
+                    title: String(localized: "Uninstall “\(app.name)”?"),
+                    message: String(
+                        localized:
+                            "\(count) (\(size)) will be moved to the Trash, where you can put them back."
+                    ) + runningSuffix,
                     symbol: "trash", confirmTitle: "Move to Trash")
             else { return }
 
@@ -87,7 +93,7 @@ final class UninstallCoordinator {
     /// Stays on the screen: losing a whole scan to copy one path is a poor trade.
     func copyUninstallPath(_ candidate: UninstallCandidate) {
         Paster.copyPlainText(candidate.path)
-        core.showMessage("Copied path")
+        core.showMessage("Copied path".localized)
     }
 
     func showUninstallItemInFinder(_ candidate: UninstallCandidate) {
@@ -121,17 +127,19 @@ final class UninstallCoordinator {
     private func presentUninstallReport(_ report: UninstallReport) async {
         guard report.hasFailures else {
             guard report.trashedCount > 0 else { return }
-            let count = report.trashedCount == 1 ? "1 item" : "\(report.trashedCount) items"
+            let count =
+                report.trashedCount == 1
+                ? "1 item".localized : String(localized: "\(report.trashedCount) items")
             let freed = MeasuredSize(bytes: report.freedBytes).formatted
-            core.showMessage("Moved \(count) to the Trash · \(freed)")
+            core.showMessage(String(localized: "Moved \(count) to the Trash · \(freed)"))
             return
         }
-        let listed = report.failed.prefix(5).map { "\($0.name) — \($0.reason)" }
+        let listed = report.failed.prefix(5).map { "\($0.name) — \($0.reason.localized)" }
         let remaining = report.failed.count - listed.count
         await core.showNotice(
             title: report.trashedCount > 0 ? "Some Items Weren’t Moved" : "Nothing Was Moved",
             message: listed.joined(separator: "\n")
-                + (remaining > 0 ? "\nand \(remaining) more." : ""),
+                + (remaining > 0 ? String(localized: "\nand \(remaining) more.") : ""),
             symbol: "trash", tone: .danger)
     }
 }

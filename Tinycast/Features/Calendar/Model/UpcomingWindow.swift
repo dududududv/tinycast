@@ -2,6 +2,12 @@ import Foundation
 
 /// Which meeting is worth showing, and whether it is time. Every clock read is an injected `now`.
 struct UpcomingWindow: Sendable {
+    enum Countdown: Equatable, Sendable {
+        case upcoming(minutes: Int)
+        case now
+        case elapsed(minutes: Int)
+    }
+
     let leadMinutes: Int
 
     private var lead: TimeInterval { TimeInterval(leadMinutes * 60) }
@@ -30,10 +36,10 @@ struct UpcomingWindow: Sendable {
         return linked.first { $0.isInProgress(now: now) } ?? linked.first { $0.start > now }
     }
 
-    static func countdown(to start: Date, now: Date) -> String {
+    static func countdown(to start: Date, now: Date) -> Countdown {
         let delta = start.timeIntervalSince(now)
-        if delta > 0 { return "in \(Int((delta / 60).rounded(.up))) min" }
+        if delta > 0 { return .upcoming(minutes: Int((delta / 60).rounded(.up))) }
         let elapsed = Int((-delta / 60).rounded(.down))
-        return elapsed == 0 ? "now" : "\(elapsed) min ago"
+        return elapsed == 0 ? .now : .elapsed(minutes: elapsed)
     }
 }

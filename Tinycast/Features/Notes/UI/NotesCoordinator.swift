@@ -251,7 +251,7 @@ final class NotesCoordinator {
         runOperation { [weak self] generation in
             guard let self else { return }
             let confirmed = await core.confirm(
-                title: "Move “\(title)” to Trash?",
+                title: String(localized: "Move “\(title)” to Trash?"),
                 message: "You can recover it from the Trash in Finder.",
                 symbol: nil,
                 confirmTitle: "Move to Trash")

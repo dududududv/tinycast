@@ -25,7 +25,7 @@ struct LauncherItemsSection: View {
                 Text("Off hides them all and stops their shortcuts. Uncheck one below to hide just that one.")
             }
         } header: {
-            Text(header)
+            Text(header.localized)
         }
 
         Section {
@@ -66,7 +66,7 @@ private struct LauncherItemRow: View {
     @Environment(VisibilityStore.self) private var visibility
 
     var body: some View {
-        SettingsRow(title: entry.name) {
+        SettingsRow(title: entry.displayName) {
             AppIconView(app: entry).frame(width: 18, height: 18)
         } trailing: {
             AliasField(entry: entry)

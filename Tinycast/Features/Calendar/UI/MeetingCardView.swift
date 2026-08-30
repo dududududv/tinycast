@@ -31,7 +31,7 @@ struct MeetingCard: View {
                     .lineLimit(1)
             }
             Spacer(minLength: Theme.Spacing.md)
-            Text(UpcomingWindow.countdown(to: meeting.start, now: now))
+            Text(UpcomingWindow.countdown(to: meeting.start, now: now).localizedText)
                 .font(Theme.Typography.rowTitle.weight(.medium))
                 .lineLimit(1)
                 .padding(.horizontal, Theme.Spacing.md)
@@ -54,7 +54,7 @@ struct MeetingCard: View {
         .armedHover($hovered)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(meeting.title), \(UpcomingWindow.countdown(to: meeting.start, now: now))"
+            "\(meeting.title), \(UpcomingWindow.countdown(to: meeting.start, now: now).localizedText)"
         )
         .accessibilityAddTraits(.isButton)
     }
@@ -62,7 +62,20 @@ struct MeetingCard: View {
     private var subtitle: String {
         let time = MeetingTimeFormat.clock(meeting.start)
         guard let provider = meeting.link?.provider else { return time }
-        return "\(time) · \(provider.title)"
+        return "\(time) · \(provider.title.localized)"
+    }
+}
+
+extension UpcomingWindow.Countdown {
+    var localizedText: String {
+        switch self {
+        case .upcoming(let minutes):
+            return String(localized: "in \(minutes) min")
+        case .now:
+            return "now".localized
+        case .elapsed(let minutes):
+            return String(localized: "\(minutes) min ago")
+        }
     }
 }
 

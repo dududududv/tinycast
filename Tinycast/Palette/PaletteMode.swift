@@ -64,5 +64,5 @@ struct PasteTarget: Equatable {
         iconPath = app.bundleURL?.path
     }
 
-    var pasteTitle: String { "Paste to \(name)" }
+    var pasteTitle: String { String(localized: "Paste to \(name)") }
 }

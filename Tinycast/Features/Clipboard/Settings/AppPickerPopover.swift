@@ -55,7 +55,7 @@ struct AppPickerPopover: View {
                     }
                 }
                 .frame(width: 20, height: 20)
-                Text(title)
+                Text(title.localized)
                     .lineLimit(1)
                 Spacer(minLength: 0)
             }

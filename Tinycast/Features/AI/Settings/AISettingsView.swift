@@ -45,7 +45,8 @@ struct AISettingsView: View {
                 onCancel: { editor = nil })
         }
         .confirmationDialog(
-            pendingRemoval.map { "Remove “\($0.title)”?" } ?? "Remove connection?",
+            pendingRemoval.map { String(localized: "Remove “\($0.title)”?") }
+                ?? "Remove connection?".localized,
             isPresented: removalPresented,
             titleVisibility: .visible
         ) {
@@ -76,7 +77,7 @@ struct AISettingsView: View {
                     ForEach(modelGroups) { group in
                         Section(group.title) {
                             ForEach(group.choices) { choice in
-                                Text(choice.title).tag(Optional(choice.selection))
+                                Text(choice.title.localized).tag(Optional(choice.selection))
                             }
                         }
                     }
@@ -87,7 +88,7 @@ struct AISettingsView: View {
                 if let efforts = selectedSubscriptionModel?.efforts, !efforts.isEmpty {
                     Picker(selection: effortBinding) {
                         ForEach(efforts) { effort in
-                            Text(effort.title).tag(effort.id)
+                            Text(effort.title.localized).tag(effort.id)
                         }
                     } label: {
                         Text("Reasoning effort")
@@ -482,24 +483,27 @@ private struct AIConnectionRow: View {
             }
             Button(action: onEdit) { Image(systemName: "pencil") }
                 .buttonStyle(.plain)
-                .help("Edit \(connection.title)")
-                .accessibilityLabel("Edit \(connection.title)")
+                .help(String(localized: "Edit \(connection.title)"))
+                .accessibilityLabel(String(localized: "Edit \(connection.title)"))
             Button(action: onRemove) {
                 Image(systemName: "trash").foregroundStyle(.red)
             }
             .buttonStyle(.plain)
-            .help("Remove \(connection.title)")
-            .accessibilityLabel("Remove \(connection.title)")
+            .help(String(localized: "Remove \(connection.title)"))
+            .accessibilityLabel(String(localized: "Remove \(connection.title)"))
         }
     }
 
     private var keyStatus: String {
-        if AIEndpointPolicy.isLoopback(connection.baseURL), !hasStoredKey { return "No key" }
-        return hasStoredKey ? "Keychain" : "Key missing"
+        if AIEndpointPolicy.isLoopback(connection.baseURL), !hasStoredKey {
+            return "No key".localized
+        }
+        return hasStoredKey ? "Keychain".localized : "Key missing".localized
     }
 
     private var modelCount: String {
-        connection.models.count == 1 ? "1 model" : "\(connection.models.count) models"
+        connection.models.count == 1
+            ? "1 model".localized : String(localized: "\(connection.models.count) models")
     }
 }
 
@@ -551,7 +555,7 @@ private struct AIConnectionEditorSheet: View {
                     }
                     editorField("API Key") {
                         SecureField(
-                            "API Key", text: $key, prompt: Text(apiKeyPlaceholder))
+                            "API Key", text: $key, prompt: Text(apiKeyPlaceholder.localized))
                     }
                     if storedKeyMatchesTarget {
                         Label("A key is already stored in Keychain", systemImage: "lock.fill")
@@ -567,10 +571,11 @@ private struct AIConnectionEditorSheet: View {
                         .foregroundStyle(.orange)
                     }
                     if let error {
-                        Text(error).foregroundStyle(.orange)
+                        Text(error.localized).foregroundStyle(.orange)
                     }
                 } header: {
-                    Text(target.isNew ? "Add API Connection" : "Edit API Connection")
+                    Text(
+                        (target.isNew ? "Add API Connection" : "Edit API Connection").localized)
                 }
 
                 Section {
@@ -649,7 +654,7 @@ private struct AIConnectionEditorSheet: View {
                 editorField("Find a model") {
                     TextField(
                         "Find a model", text: $modelQuery,
-                        prompt: Text(modelSearchPlaceholder)
+                        prompt: Text(modelSearchPlaceholder.localized)
                     )
                     .onSubmit { addExactMatch(from: models) }
                 }
@@ -659,7 +664,7 @@ private struct AIConnectionEditorSheet: View {
             LabeledContent {
                 Button("Try Again") { discoveryRevision += 1 }
             } label: {
-                Label(message, systemImage: "exclamationmark.triangle")
+                Label(message.localized, systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
             }
             ForEach(connection.models, id: \.self) { model in
@@ -716,7 +721,7 @@ private struct AIConnectionEditorSheet: View {
 
     private var manualModelField: some View {
         editorField("Model ID") {
-            TextField("Model ID", text: $modelQuery, prompt: Text(modelPlaceholder))
+            TextField("Model ID", text: $modelQuery, prompt: Text(modelPlaceholder.localized))
                 .onSubmit(addManualModel)
         }
     }
@@ -732,7 +737,7 @@ private struct AIConnectionEditorSheet: View {
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         } label: {
-            Text(title).font(.callout.weight(.medium))
+            Text(title.localized).font(.callout.weight(.medium))
         }
     }
 

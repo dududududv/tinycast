@@ -179,7 +179,7 @@ private struct AboutLinkRow: View {
                 }
             } label: {
                 Label {
-                    Text(link.title)
+                    Text(link.title.localized)
                 } icon: {
                     glyph
                 }

@@ -6,7 +6,7 @@ struct SectionHeader: View {
     /// The first header hugs the top; later ones get spacing above, reading as below.
     var isFirst = false
     var body: some View {
-        Text(title)
+        Text(title.localized)
             .font(Theme.Typography.sectionHeader)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)

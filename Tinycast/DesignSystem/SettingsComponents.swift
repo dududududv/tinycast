@@ -13,10 +13,10 @@ struct SettingsRow<Icon: View, Trailing: View>: View {
         HStack(spacing: Theme.Spacing.lg) {
             icon
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                Text(title)
+                Text(title.localized)
                     .lineLimit(1)
                 if let subtitle {
-                    Text(subtitle)
+                    Text(subtitle.localized)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -55,17 +55,17 @@ struct FeatureSwitchSection: View {
     var body: some View {
         Section {
             Toggle(isOn: $isEnabled) {
-                Text(enableTitle)
-                Text(enableSubtitle)
+                Text(enableTitle.localized)
+                Text(enableSubtitle.localized)
             }
             Toggle(isOn: $showsInLauncher) {
                 Text("Show in launcher")
-                Text(launcherSubtitle)
+                Text(launcherSubtitle.localized)
             }
             // The switch above stays live so the feature can always be turned back on.
             .settingsEnabled(isEnabled)
         } header: {
-            Text(header)
+            Text(header.localized)
         }
     }
 }
@@ -86,7 +86,7 @@ struct SettingsFilterField: View {
             // its label in the left-hand column, which turns the placeholder into a heading. And
             // `labelsHidden`, or the form reserves that column for the empty title anyway and the
             // field starts halfway across the row, nowhere near the magnifying glass.
-            TextField("", text: $query, prompt: Text(prompt))
+            TextField("", text: $query, prompt: Text(prompt.localized))
                 .textFieldStyle(.plain)
                 .labelsHidden()
                 .focused($focused)

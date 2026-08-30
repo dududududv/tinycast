@@ -94,7 +94,7 @@ final class ExtensionCoordinator {
         Task {
             guard
                 await core.confirm(
-                    title: "Uninstall \(owner.title)?",
+                    title: String(localized: "Uninstall \(owner.title)?"),
                     message:
                         "Removes the extension and everything it stored — its preferences, its cache "
                         + "and its own files. Its commands leave the launcher.",
@@ -110,7 +110,7 @@ final class ExtensionCoordinator {
         let size = ExtensionCleanup.formatted(bytes: report.bytes)
         guard
             await core.confirm(
-                title: "Clean up \(size)?",
+                title: String(localized: "Clean up \(size)?"),
                 message:
                     "Removes build files left by an interrupted install, and the storage of "
                     + "extensions that are no longer installed. Installed extensions are untouched.",
@@ -124,7 +124,9 @@ final class ExtensionCoordinator {
         }.value
         core.showMessage(
             freed.isEmpty
-                ? "Nothing to clean up" : "Reclaimed \(ExtensionCleanup.formatted(bytes: freed.bytes))")
+                ? "Nothing to clean up".localized
+                : String(
+                    localized: "Reclaimed \(ExtensionCleanup.formatted(bytes: freed.bytes))"))
     }
 
     /// What no index prunes: left behind, these key a shortcut or a rank to a vanished command.

@@ -103,7 +103,7 @@ private struct SupportActionButton: View {
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: icon)
                     .font(.body.weight(.semibold))
-                Text(title)
+                Text(title.localized)
                     .font(.headline)
             }
             // White ink in both appearances: a saturated fill carries its own contrast.

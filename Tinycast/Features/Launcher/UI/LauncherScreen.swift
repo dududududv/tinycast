@@ -93,7 +93,7 @@ struct LauncherScreen: PaletteScreen {
         case .calc: return "Copy Answer"
         case .meeting(let meeting):
             return meeting.link == nil ? "Open in Calendar" : "Join Meeting"
-        case .entry(let app): return app.kind.descriptor.openVerb
+        case .entry(let app): return app.kind.descriptor.openVerb.localized
         case nil: return "Open Application"
         }
     }

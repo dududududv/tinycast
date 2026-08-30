@@ -59,7 +59,7 @@ struct GeneralSettingsView: View {
             Section {
                 Picker(selection: $settings.hyperKey) {
                     ForEach(HyperKeyPhysicalKey.allCases) { key in
-                        Text(key.title).tag(key)
+                        Text(key.title.localized).tag(key)
                     }
                 } label: {
                     Text("Hyper Key")
@@ -111,7 +111,7 @@ struct GeneralSettingsView: View {
             Section {
                 Picker(selection: $settings.appearance) {
                     ForEach(AppAppearance.allCases) { appearance in
-                        Text(appearance.title).tag(appearance)
+                        Text(appearance.title.localized).tag(appearance)
                     }
                 } label: {
                     Text("Theme")
@@ -155,7 +155,7 @@ struct GeneralSettingsView: View {
                 }
                 Picker(selection: $settings.popToRootTimeout) {
                     ForEach(PopToRootTimeout.allCases) { timeout in
-                        Text(timeout.title).tag(timeout)
+                        Text(timeout.title.localized).tag(timeout)
                     }
                 } label: {
                     Text("Pop to Root Search")

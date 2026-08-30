@@ -25,7 +25,7 @@ struct ClipboardSettingsView: View {
             Section {
                 Picker(selection: $settings.clipboardRetention) {
                     ForEach(ClipboardRetention.allCases) { retention in
-                        Text(retention.title).tag(retention)
+                        Text(retention.title.localized).tag(retention)
                     }
                 } label: {
                     Text("Keep history for")

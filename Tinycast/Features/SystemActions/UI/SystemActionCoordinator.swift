@@ -47,7 +47,8 @@ final class SystemActionCoordinator {
                 let state = try SystemActionRunner.outputState()
                 volumeHUD.show(level: state.level, muted: state.muted)
             } else if let feedback {
-                core.showMessage(feedback.title, tone: feedback.isNoOp ? .neutral : .success)
+                core.showMessage(
+                    feedback.title.localized, tone: feedback.isNoOp ? .neutral : .success)
             }
         } catch let failure as SystemActionFailure {
             await presentFailure(action: action, failure: failure)
@@ -71,7 +72,8 @@ final class SystemActionCoordinator {
     private func presentFailure(action: SystemAction, failure: SystemActionFailure) async {
         guard
             await core.reportFailure(
-                title: "“\(action.name)” Failed", message: failure.message,
+                title: String(localized: "“\(action.name.localized)” Failed"),
+                message: failure.message.localized,
                 symbol: action.sfSymbol,
                 recovery: failure.settings == nil ? nil : "Open System Settings…"),
             let settings = failure.settings
@@ -93,7 +95,8 @@ final class SystemActionCoordinator {
         guard !targets.isEmpty,
             await core.confirm(
                 title: targets.count == 1
-                    ? "Quit 1 application?" : "Quit \(targets.count) applications?",
+                    ? "Quit 1 application?".localized
+                    : String(localized: "Quit \(targets.count) applications?"),
                 message: "Applications with unsaved changes will ask you to save.",
                 symbol: SystemActionCatalog.action(id: .quitAllApps).sfSymbol,
                 confirmTitle: "Quit All")

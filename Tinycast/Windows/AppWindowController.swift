@@ -17,7 +17,7 @@ final class AppWindowController: NSObject, NSWindowDelegate {
         title: String, contentSize: CGSize, resizable: Bool = false, autosaveName: String? = nil,
         activation: ActivationPolicy
     ) {
-        self.title = title
+        self.title = title.localized
         self.contentSize = contentSize
         self.isResizable = resizable
         self.autosaveName = autosaveName

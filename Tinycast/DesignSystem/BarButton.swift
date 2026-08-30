@@ -81,7 +81,7 @@ struct HeaderMenuButton: View {
                 case .file(let path):
                     MenuFileIcon(path: path)
                 }
-                Text(title)
+                Text(title.localized)
                     .font(Theme.Typography.bar)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -91,6 +91,6 @@ struct HeaderMenuButton: View {
             }
             .foregroundStyle(Theme.Colors.textSecondary)
         }
-        .help(help)
+        .help(help.localized)
     }
 }

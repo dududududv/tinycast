@@ -154,18 +154,28 @@ final class AIChatCoordinator {
             guard let self else { return }
             guard generation == self.chat.stagingGeneration else {
                 core.showMessage(
-                    "That image was still loading and did not make it into the chat.",
+                    "That image was still loading and did not make it into the chat.".localized,
                     tone: .neutral)
                 return
             }
             guard let staged else {
-                core.showMessage("That image could not be read.", tone: .neutral)
+                core.showMessage("That image could not be read.".localized, tone: .neutral)
                 return
             }
             let attachment = ChatAttachment(
                 image: AIImage(data: staged.0, mimeType: "image/png"), name: staged.1)
             if let refusal = chat.attach(attachment) {
-                core.showMessage(refusal.message, tone: .neutral)
+                let message =
+                    switch refusal {
+                    case .count:
+                        String(
+                            localized:
+                                "\(AIAttachmentBudget.maxCount) images is all one message can carry."
+                        )
+                    case .size:
+                        "That image is too big for this message — send these first.".localized
+                    }
+                core.showMessage(message, tone: .neutral)
             }
         }
     }

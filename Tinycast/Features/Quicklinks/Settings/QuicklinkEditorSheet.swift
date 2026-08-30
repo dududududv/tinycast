@@ -191,8 +191,8 @@ struct QuicklinkEditorSheet: View {
     private func optionToggle(_ title: String, isOn: Binding<Bool>, detail: String) -> some View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                Text(title)
-                Text(detail)
+                Text(title.localized)
+                Text(detail.localized)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

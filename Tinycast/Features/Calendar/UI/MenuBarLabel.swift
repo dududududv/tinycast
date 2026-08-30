@@ -19,7 +19,8 @@ struct MenuBarLabel: View {
 
     private func text(for meeting: MeetingEvent) -> String {
         let countdown = UpcomingWindow.countdown(
-            to: meeting.start, now: AppCore.shared.meetingClock.now)
+            to: meeting.start, now: AppCore.shared.meetingClock.now
+        ).localizedText
         return "\(MenuBarSummary.title(meeting.title)) · \(countdown)"
     }
 }

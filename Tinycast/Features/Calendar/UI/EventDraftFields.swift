@@ -44,7 +44,7 @@ private struct ChipRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            Text(label)
+            Text(label.localized)
                 .font(Theme.Typography.rowTrailing)
                 .foregroundStyle(Theme.Colors.textSecondary)
                 .frame(width: Theme.Size.dialogIcon, alignment: .leading)
@@ -70,7 +70,7 @@ private struct Chip: View {
 
     var body: some View {
         Button(action: onTap) {
-            Text(title)
+            Text(title.localized)
                 .font(Theme.Typography.rowTrailing)
                 .foregroundStyle(selected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
                 .padding(.horizontal, Theme.Spacing.lg)

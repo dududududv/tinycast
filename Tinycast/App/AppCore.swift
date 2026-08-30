@@ -293,7 +293,7 @@ final class AppCore {
         case .delivered:
             paletteCoordinator.showPalette(mode: .extensionCommand, restoreAnyMode: true)
         case .expired:
-            showMessage("Sign-in expired — run the command again", tone: .danger)
+            showMessage("Sign-in expired — run the command again".localized, tone: .danger)
         case .ignored:
             break
         }

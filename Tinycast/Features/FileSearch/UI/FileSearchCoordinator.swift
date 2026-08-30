@@ -46,7 +46,7 @@ final class FileSearchCoordinator {
                     result.url, configuration: NSWorkspace.OpenConfiguration())
             } catch {
                 await core.showNotice(
-                    title: "Couldn’t Open \(result.name)",
+                    title: String(localized: "Couldn’t Open \(result.name)"),
                     message: error.localizedDescription,
                     symbol: result.isDirectory ? "folder" : "doc", tone: .danger)
             }
@@ -60,6 +60,6 @@ final class FileSearchCoordinator {
 
     func copyPath(_ result: FileSearchResult) {
         Paster.copyPlainText(result.id)
-        core.showMessage("Copied path")
+        core.showMessage("Copied path".localized)
     }
 }

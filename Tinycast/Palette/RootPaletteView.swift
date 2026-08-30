@@ -584,7 +584,7 @@ struct RootPaletteView: View {
         if vm.mode == .extensionCommand, let placeholder = extensionScreen.searchPlaceholder {
             return placeholder
         }
-        return vm.mode.placeholder
+        return vm.mode.placeholder.localized
     }
 
     /// The one search field — past its text it's a drag handle, matching Spotlight.
@@ -655,7 +655,7 @@ struct RootPaletteView: View {
         HStack(spacing: 2) {
             BarButton(action: activateSelection) {
                 HStack(spacing: Theme.Spacing.sm) {
-                    Text(pillLabel)
+                    Text(pillLabel.localized)
                         .font(Theme.Typography.bar)
                         .foregroundStyle(pillTint)
                     KeyCapChip(text: "↵", style: .outline)
@@ -935,7 +935,7 @@ struct EmptyResults: View {
         VStack(spacing: 8) {
             Image(systemName: "magnifyingglass").font(.largeTitle)
                 .symbolRenderingMode(.hierarchical).foregroundStyle(.tertiary)
-            Text(text).foregroundStyle(.secondary)
+            Text(text.localized).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

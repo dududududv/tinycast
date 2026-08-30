@@ -346,7 +346,7 @@ private struct SnippetEditorSheet: View {
         title: String, placeholder: String, text: Binding<String>, hint: String
     ) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text(title)
+            Text(title.localized)
                 .font(.callout.weight(.medium))
             TextField(placeholder, text: text)
                 .textFieldStyle(.roundedBorder)
@@ -360,8 +360,8 @@ private struct SnippetEditorSheet: View {
     ) -> some View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                Text(title)
-                Text(detail)
+                Text(title.localized)
+                Text(detail.localized)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

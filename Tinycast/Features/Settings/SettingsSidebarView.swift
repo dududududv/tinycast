@@ -7,9 +7,9 @@ struct SettingsSidebarView: View {
     var body: some View {
         List(selection: selection) {
             ForEach(SettingsSection.allCases) { section in
-                Section(section.title) {
+                Section(section.title.localized) {
                     ForEach(section.tabs) { tab in
-                        Label(tab.title, systemImage: tab.systemImage).tag(tab)
+                        Label(tab.title.localized, systemImage: tab.systemImage).tag(tab)
                     }
                 }
             }

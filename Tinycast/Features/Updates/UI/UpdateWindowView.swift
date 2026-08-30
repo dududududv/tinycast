@@ -58,10 +58,10 @@ struct UpdateWindowView: View {
                 )
                 .padding(-Self.iconBleed)
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                Text(title)
+                Text(title.localized)
                     .font(.headline)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(subtitle)
+                Text(subtitle.localized)
                     .font(.subheadline)
                     .foregroundStyle(Theme.Colors.textSecondary)
             }
