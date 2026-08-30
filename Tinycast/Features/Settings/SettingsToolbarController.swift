@@ -64,10 +64,10 @@ final class SettingsToolbarController: NSObject, WindowChrome, NSToolbarDelegate
         switch identifier {
         case Self.back:
             item.view = backButton
-            item.label = "Back"
+            item.label = "Back".localized
         case Self.forward:
             item.view = forwardButton
-            item.label = "Forward"
+            item.label = "Forward".localized
         default:
             return nil
         }
@@ -94,13 +94,14 @@ final class SettingsToolbarController: NSObject, WindowChrome, NSToolbarDelegate
     }
 
     private func sync() {
-        window?.title = navigation.tab.title
+        window?.title = navigation.tab.title.localized
         backButton.isEnabled = navigation.canGoBack
         forwardButton.isEnabled = navigation.canGoForward
     }
 
     /// The directional pair, not `chevron.left/right`, so the control mirrors in RTL.
     private static func makeButton(_ symbol: String, _ label: String) -> NSButton {
+        let label = label.localized
         let image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
         let button = NSButton(image: image ?? NSImage(), target: nil, action: nil)
         button.bezelStyle = .toolbar

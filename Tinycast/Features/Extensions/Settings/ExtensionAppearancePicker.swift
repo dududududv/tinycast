@@ -59,7 +59,7 @@ struct ExtensionAppearancePicker: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .help(tint.title)
+                    .help(tint.title.localized)
                 }
             }
 
@@ -71,7 +71,7 @@ struct ExtensionAppearancePicker: View {
                     .pointerStyle(.horizontalText)
                 Picker("", selection: $category) {
                     ForEach(catalog.categories) { item in
-                        Text(item.title).tag(item)
+                        Text(item.title.localized).tag(item)
                     }
                 }
                 .labelsHidden()
@@ -135,8 +135,15 @@ struct ExtensionAppearancePicker: View {
     }
 
     private func footnote(_ count: Int) -> String {
-        let noun = count == 1 ? "symbol" : "symbols"
-        return query.isEmpty ? "\(count) \(noun) in \(category.title)" : "\(count) \(noun) matching"
+        if query.isEmpty {
+            let category = category.title.localized
+            return count == 1
+                ? String(localized: "1 symbol in \(category)")
+                : String(localized: "\(count) symbols in \(category)")
+        }
+        return count == 1
+            ? String(localized: "1 symbol matching")
+            : String(localized: "\(count) symbols matching")
     }
 }
 

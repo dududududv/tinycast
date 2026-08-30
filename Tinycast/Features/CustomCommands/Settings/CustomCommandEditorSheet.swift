@@ -24,7 +24,11 @@ struct CustomCommandEditorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-            Text(command == nil ? "Add Custom Command" : "Edit Custom Command")
+            Text(
+                command == nil
+                    ? String(localized: "Add Custom Command")
+                    : String(localized: "Edit Custom Command")
+            )
                 .font(.title2.weight(.bold))
 
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -69,7 +73,7 @@ struct CustomCommandEditorSheet: View {
             }
 
             if let errorMessage {
-                Text(errorMessage)
+                Text(errorMessage.localized)
                     .font(.caption)
                     .foregroundStyle(.orange)
             }

@@ -36,7 +36,10 @@ struct QuicklinkEditorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-            Text(quicklink == nil ? "Add Quicklink" : "Edit Quicklink")
+            Text(
+                quicklink == nil
+                    ? String(localized: "Add Quicklink") : String(localized: "Edit Quicklink")
+            )
                 .font(.title2.weight(.bold))
 
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -74,7 +77,7 @@ struct QuicklinkEditorSheet: View {
             }
 
             if let errorMessage {
-                Text(errorMessage)
+                Text(errorMessage.localized)
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
@@ -146,7 +149,10 @@ struct QuicklinkEditorSheet: View {
             } label: {
                 HStack(spacing: Theme.Spacing.sm) {
                     SymbolImage(name: resolvedSymbol, size: 14)
-                    Text(iconSymbol == nil ? "Automatic" : "Custom")
+                    Text(
+                        iconSymbol == nil
+                            ? String(localized: "Automatic") : String(localized: "Custom")
+                    )
                         .lineLimit(1)
                     Spacer(minLength: 0)
                 }

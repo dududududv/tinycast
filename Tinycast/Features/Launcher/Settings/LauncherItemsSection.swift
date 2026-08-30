@@ -32,7 +32,11 @@ struct LauncherItemsSection: View {
             SettingsFilterField(prompt: searchPrompt, query: $query)
 
             if entries.isEmpty {
-                Text(query.isEmpty ? "Nothing here yet." : "No matches for “\(query)”.")
+                Text(
+                    query.isEmpty
+                        ? String(localized: "Nothing here yet.")
+                        : String(localized: "No matches for “\(query)”.")
+                )
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
             } else {

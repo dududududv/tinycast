@@ -453,9 +453,10 @@ things follow from the enum:
 Source: `DesignSystem/SettingsComponents.swift`.
 
 Settings runs in its own resizable `NSWindow` (the SwiftUI `Settings` scene is unreliable for accessory
-apps) with real traffic lights and a lifecycle wholly its own. It does not share the palette's look: **every pane is a stock
-`Form` with `.formStyle(.grouped)`**, so the cards, headers, row insets and hairlines are all
-system-drawn and a pane reads exactly as macOS System Settings does.
+apps) with real traffic lights. Opening it dismisses the transient floating palette before raising the
+normal-level window, so Settings becomes frontmost without staying above other apps. It does not share
+the palette's look: **every pane is a stock `Form` with `.formStyle(.grouped)`**, so the cards, headers,
+row insets and hairlines are all system-drawn and a pane reads exactly as macOS System Settings does.
 
 - **A row is a stock control.** `LabeledContent`, `Toggle` or `Picker`, each with a two-view label —
   the first view is the title, the rest become the secondary subtitle. Never a hand-built `HStack`

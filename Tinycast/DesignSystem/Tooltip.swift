@@ -10,7 +10,7 @@ private struct TooltipModifier: ViewModifier {
             .onHover { hovered = text != nil && $0 }
             .overlay(alignment: .top) {
                 if let text, hovered {
-                    Text(text)
+                    Text(text.localized)
                         .font(Theme.Typography.keyCap)
                         .foregroundStyle(Theme.Colors.textSecondary)
                         .padding(.horizontal, Theme.Spacing.sm)

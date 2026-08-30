@@ -61,7 +61,7 @@ struct PopoverMenu: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             if let header {
-                Text(header)
+                Text(header.localized)
                     .font(Theme.Typography.sectionHeader)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

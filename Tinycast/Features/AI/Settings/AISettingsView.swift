@@ -219,7 +219,7 @@ struct AISettingsView: View {
                 Button("Check Again") { subscription.refresh() }
             } label: {
                 Text("Codex CLI required")
-                Text(message)
+                Text(message.localized)
             }
         case .failed(let message):
             LabeledContent {
@@ -227,7 +227,7 @@ struct AISettingsView: View {
             } label: {
                 Label("ChatGPT connection failed", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
-                Text(message)
+                Text(message.localized)
             }
         }
     }
@@ -471,7 +471,7 @@ private struct AIConnectionRow: View {
     var body: some View {
         SettingsRow(
             title: connection.title,
-            subtitle: "\(connection.provider.title) · \(keyStatus) · \(modelCount)"
+            subtitle: "\(connection.provider.title.localized) · \(keyStatus) · \(modelCount)"
         ) {
             Image(systemName: "sparkles")
                 .foregroundStyle(isDefault ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
@@ -543,7 +543,7 @@ private struct AIConnectionEditorSheet: View {
                     editorField("Provider") {
                         Picker("Provider", selection: $connection.provider) {
                             ForEach(AIProviderKind.allCases) { provider in
-                                Text(provider.title).tag(provider)
+                                Text(provider.title.localized).tag(provider)
                             }
                         }
                         .labelsHidden()

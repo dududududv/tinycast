@@ -113,7 +113,10 @@ struct ExtensionRegistriesSheet: View {
         } trailing: {
             Toggle("", isOn: binding(for: registry))
                 .labelsHidden()
-                .help(registry.isEnabled ? "Searched" : "Not searched")
+                .help(
+                    registry.isEnabled
+                        ? String(localized: "Searched") : String(localized: "Not searched")
+                )
             if !registry.isBuiltIn {
                 Button {
                     settings.extensionRegistries.removeAll { $0.id == registry.id }
@@ -123,7 +126,7 @@ struct ExtensionRegistriesSheet: View {
                 }
                 .buttonStyle(.plain)
                 .help("Remove Registry")
-                .accessibilityLabel("Remove \(registry.name)")
+                .accessibilityLabel(String(localized: "Remove \(registry.name)"))
             }
         }
     }
@@ -136,7 +139,7 @@ struct ExtensionRegistriesSheet: View {
         } trailing: {
             Picker("", selection: $settings.extensionPackageManager) {
                 ForEach(ExtensionPackageManager.allCases) { manager in
-                    Text(manager.title).tag(manager)
+                    Text(manager.title.localized).tag(manager)
                 }
             }
             .labelsHidden()
@@ -149,12 +152,18 @@ struct ExtensionRegistriesSheet: View {
         let additionalSearchPaths = settings.extensionCustomSearchPaths
         guard let resolved = chosen.resolve(additionalSearchPaths: additionalSearchPaths) else {
             return chosen == .automatic
-                ? "None found on this Mac. Install pnpm, npm, Yarn or Bun to use a source registry."
-                : "\(chosen.title) isn't installed on this Mac."
+                ? String(
+                    localized:
+                        "None found on this Mac. Install pnpm, npm, Yarn or Bun to use a source registry."
+                )
+                : String(localized: "\(chosen.title.localized) isn't installed on this Mac.")
         }
         return chosen == .automatic
-            ? "Found \(resolved.manager.title) at \(resolved.url.path)."
-            : "Found at \(resolved.url.path)."
+            ? String(
+                localized:
+                    "Found \(resolved.manager.title.localized) at \(resolved.url.path)."
+            )
+            : String(localized: "Found at \(resolved.url.path).")
     }
 
     /// Extra PATH folders Tinycast checks before its built-in list — for a package manager or Node
@@ -267,7 +276,10 @@ struct RegistryEditorSheet: View {
 
             if let parsed {
                 Text(
-                    "Will search \(parsed.owner)/\(parsed.repository)/\(parsed.path) at \(parsed.ref)."
+                    String(
+                        localized:
+                            "Will search \(parsed.owner)/\(parsed.repository)/\(parsed.path) at \(parsed.ref)."
+                    )
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)

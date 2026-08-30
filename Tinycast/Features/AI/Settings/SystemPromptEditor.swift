@@ -22,7 +22,11 @@ struct SystemPromptEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack(spacing: Theme.Spacing.sm) {
-                Text(text.isBlank ? "Nothing added" : "Added to every message")
+                Text(
+                    text.isBlank
+                        ? String(localized: "Nothing added")
+                        : String(localized: "Added to every message")
+                )
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer(minLength: Theme.Spacing.lg)

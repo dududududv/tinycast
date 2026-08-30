@@ -64,7 +64,11 @@ struct SnippetsSettingsView: View {
     private var library: some View {
         Section {
             if sortedSnippets.isEmpty {
-                Text(snippetsStore.state == .loading ? "Loading snippets…" : "No snippets yet.")
+                Text(
+                    snippetsStore.state == .loading
+                        ? String(localized: "Loading snippets…")
+                        : String(localized: "No snippets yet.")
+                )
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(sortedSnippets) { record in
@@ -125,9 +129,9 @@ struct SnippetsSettingsView: View {
                         .accessibilityHint(retryHint)
                 }
             } label: {
-                Label(title, systemImage: "exclamationmark.triangle")
+                Label(title.localized, systemImage: "exclamationmark.triangle")
                     .foregroundStyle(tint)
-                Text(message)
+                Text(message.localized)
             }
         }
         .accessibilityElement(children: .contain)
@@ -228,7 +232,10 @@ private struct SnippetEditorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
-            Text(record == nil ? "Add Snippet" : "Edit Snippet")
+            Text(
+                record == nil
+                    ? String(localized: "Add Snippet") : String(localized: "Edit Snippet")
+            )
                 .font(.title2.weight(.bold))
 
             field(
@@ -250,7 +257,7 @@ private struct SnippetEditorSheet: View {
             }
 
             if let errorMessage {
-                Text(errorMessage)
+                Text(errorMessage.localized)
                     .font(.caption)
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)

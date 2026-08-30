@@ -112,8 +112,8 @@ imperatively from AppKit.
   See [features/palette.md](features/palette.md).
 - **Settings and Onboarding** — titled `NSWindow`s, one `Windows/AppWindowController.swift` each, owned
   by `SettingsCoordinator` and `OnboardingCoordinator`. SwiftUI `Settings` and `Window` scenes are
-  unreliable for accessory apps, so this is deliberate. Their lifecycles are independent of the
-  palette's in both directions.
+  unreliable for accessory apps, so this is deliberate. Opening Settings dismisses the floating
+  palette before raising its normal-level window; closing Settings never reopens the palette.
 - **Notes** — a persistent, titled, non-activating `NotesPanel` managed by `NotesWindowController`.
   The user owns its size and AppKit autosaves the frame; its literal-source TextKit 2 editor switches
   among local Markdown files and stays visible on focus loss. The displayed string is the canonical

@@ -158,7 +158,7 @@ private struct ChatMessageView: View {
         if message.text.isEmpty, message.searches.isEmpty, message.state == .streaming {
             HStack(spacing: Theme.Spacing.sm) {
                 ProgressView().controlSize(.small)
-                if let status { Text(status).foregroundStyle(.secondary) }
+                if let status { Text(status.localized).foregroundStyle(.secondary) }
             }
             .padding(Theme.Spacing.md)
         } else {
@@ -244,7 +244,10 @@ private struct ChatSearchRow: View {
             } else {
                 ProgressView().controlSize(.small)
             }
-            Text(search.isComplete ? "Searched web" : "Searching web")
+            Text(
+                search.isComplete
+                    ? String(localized: "Searched web") : String(localized: "Searching web")
+            )
                 .font(Theme.Typography.rowTrailing)
             if let query = search.query, !query.isEmpty {
                 Text("· \(query)")

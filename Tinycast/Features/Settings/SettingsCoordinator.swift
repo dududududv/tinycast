@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Settings' lifecycle, independent of the palette: neither surface opens or closes the other.
+/// Settings owns its window; opening it dismisses the transient palette so normal window ordering wins.
 @MainActor
 final class SettingsCoordinator {
     private let window: AppWindowController
@@ -18,6 +18,9 @@ final class SettingsCoordinator {
 
     /// A fresh window mounts on `tab`; an open one navigates to it, recording the jump in history.
     func showSettings(tab: SettingsTab = .general) {
+        if core.paletteCoordinator.isVisible {
+            core.paletteCoordinator.hidePalette(restoreFocus: false)
+        }
         if window.focus() {
             navigation?.select(tab)
             return

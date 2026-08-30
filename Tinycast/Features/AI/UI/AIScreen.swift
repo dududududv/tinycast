@@ -127,7 +127,7 @@ private struct AIEmptyState: View {
             Text("Ask anything")
                 .foregroundStyle(.secondary)
             if let message {
-                Text(message)
+                Text(message.localized)
                     .font(Theme.Typography.rowTrailing)
                     .foregroundStyle(Theme.Colors.textTertiary)
                     .multilineTextAlignment(.center)

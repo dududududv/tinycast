@@ -26,10 +26,16 @@ struct ExtensionStoreSheet: View {
     private var searchingSummary: String {
         let on = registries.filter(\.isEnabled)
         guard !on.isEmpty else {
-            return "No registries are enabled. Turn one on under Install → Where to search."
+            return String(
+                localized:
+                    "No registries are enabled. Turn one on under Install → Where to search."
+            )
         }
         let names = on.map(\.name).joined(separator: ", ")
-        return "Searching \(names). Store extensions install as they are; a repository is built first."
+        return String(
+            localized:
+                "Searching \(names). Store extensions install as they are; a repository is built first."
+        )
     }
 
     var body: some View {
@@ -82,7 +88,7 @@ struct ExtensionStoreSheet: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if results.isEmpty && searched {
-            placeholder("Nothing matches “\(query)”.")
+            placeholder(String(localized: "Nothing matches “\(query)”."))
         } else {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
@@ -137,7 +143,7 @@ struct ExtensionStoreSheet: View {
     }
 
     private func placeholder(_ text: String) -> some View {
-        Text(text)
+        Text(text.localized)
             .font(.callout)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -306,7 +312,7 @@ private struct StoreRow: View {
         case .installing(let message):
             HStack(spacing: Theme.Spacing.sm) {
                 ProgressView().controlSize(.small)
-                Text(message).font(.caption).foregroundStyle(.secondary)
+                Text(message.localized).font(.caption).foregroundStyle(.secondary)
             }
             .fixedSize()
         case .installed:

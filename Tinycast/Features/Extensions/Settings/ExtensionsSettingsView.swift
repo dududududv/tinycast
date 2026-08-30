@@ -238,9 +238,13 @@ struct ExtensionsSettingsView: View {
     }
 
     private var reclaimableSubtitle: String {
-        guard !reclaimable.isEmpty else { return "Nothing to clean up." }
-        let items = reclaimable.items == 1 ? "1 item" : "\(reclaimable.items) items"
-        return "Reclaims \(ExtensionCleanup.formatted(bytes: reclaimable.bytes)) from \(items)."
+        guard !reclaimable.isEmpty else { return String(localized: "Nothing to clean up.") }
+        let items =
+            reclaimable.items == 1
+            ? String(localized: "1 item")
+            : String(localized: "\(reclaimable.items) items")
+        let bytes = ExtensionCleanup.formatted(bytes: reclaimable.bytes)
+        return String(localized: "Reclaims \(bytes) from \(items).")
     }
 
     /// Off-main: measuring walks a `node_modules`, which is tens of thousands of files.
@@ -255,27 +259,36 @@ struct ExtensionsSettingsView: View {
     /// Names what searching will cover, so the row says what the Registries button is for.
     private var searchSubtitle: String {
         let on = core.settings.extensionRegistries.filter(\.isEnabled)
-        guard !on.isEmpty else { return "No registries enabled — searching would find nothing." }
-        return "Searching \(on.map(\.name).joined(separator: ", "))."
+        guard !on.isEmpty else {
+            return String(localized: "No registries enabled — searching would find nothing.")
+        }
+        return String(localized: "Searching \(on.map(\.name).joined(separator: ", ")).")
     }
 
     private var importSubtitle: String {
         if let importProgress {
-            return "Importing \(importProgress.done) of \(importProgress.total)…"
+            return String(
+                localized: "Importing \(importProgress.done) of \(importProgress.total)…")
         }
         if let importSummary { return importSummary }
         guard raycastAvailable else {
-            return "No Raycast install found in ~/.config — checked raycast and raycast-x."
+            return String(
+                localized: "No Raycast install found in ~/.config — checked raycast and raycast-x.")
         }
         guard !pending.isEmpty else {
-            return "Copy what Raycast has already built. No Node or package manager needed."
+            return String(
+                localized:
+                    "Copy what Raycast has already built. No Node or package manager needed."
+            )
         }
         let names = pending.map(\.installed.title)
             .sorted { $0.sortKey.localizedCaseInsensitiveCompare($1.sortKey) == .orderedAscending }
             .prefix(3)
             .joined(separator: ", ")
-        let more = pending.count > 3 ? " and \(pending.count - 3) more" : ""
-        return "\(pending.count) not here yet — \(names)\(more)."
+        let more =
+            pending.count > 3
+            ? String(localized: " and \(pending.count - 3) more") : ""
+        return String(localized: "\(pending.count) not here yet — \(names)\(more).")
     }
 
     private var raycastAvailable: Bool {
@@ -374,7 +387,9 @@ private struct ExtensionDisclosure: View {
         .onTapGesture(perform: onToggle)
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel(
-            isExpanded ? "Hide \(installed.title) settings" : "Configure \(installed.title)")
+            isExpanded
+                ? String(localized: "Hide \(installed.title) settings")
+                : String(localized: "Configure \(installed.title)"))
     }
 
     /// One `Grid` for every run: separate grids size their columns apart, stranding controls mid-row.
@@ -422,7 +437,7 @@ private struct ExtensionDisclosure: View {
     /// A step below the pane's section headers, by size and colour: nothing here sets a heading in caps.
     private func heading(_ title: String) -> some View {
         GridRow {
-            Text(title)
+            Text(title.localized)
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.tertiary)
                 .gridCellColumns(2)
@@ -441,7 +456,9 @@ private struct ExtensionDisclosure: View {
 
     private var subtitle: String {
         let count = installed.manifest.commands.count
-        let commands = "\(count) command\(count == 1 ? "" : "s")"
+        let commands =
+            count == 1
+            ? String(localized: "1 command") : String(localized: "\(count) commands")
         let author = installed.manifest.author
         return author.isEmpty ? commands : "\(commands) · \(author)"
     }
@@ -656,7 +673,10 @@ private struct ExtensionPreferenceRow: View {
                 .onChange(of: text) { _, value in save(value) }
         case .file, .directory, .appPicker:
             HStack(spacing: Theme.Spacing.sm) {
-                Text(text.isEmpty ? "Not set" : (text as NSString).lastPathComponent)
+                Text(
+                    text.isEmpty
+                        ? String(localized: "Not set") : (text as NSString).lastPathComponent
+                )
                     .foregroundStyle(text.isEmpty ? .secondary : .primary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -777,7 +797,10 @@ private struct ExtensionImportSheet: View {
 
             HStack {
                 // Reads against what is actually selected, so it is never a button that does nothing.
-                Button(allChosen ? "Deselect All" : "Select All") {
+                Button(
+                    allChosen
+                        ? String(localized: "Deselect All") : String(localized: "Select All")
+                ) {
                     chosen = allChosen ? [] : Set(candidates.map(\.installed.manifest.name))
                 }
                 .disabled(candidates.isEmpty)
@@ -806,20 +829,33 @@ private struct ExtensionImportSheet: View {
 
     private var subtitle: String {
         guard !candidates.isEmpty else {
-            return "No built extensions found in ~/.config/raycast/extensions."
+            return String(
+                localized: "No built extensions found in ~/.config/raycast/extensions.")
         }
         guard !fresh.isEmpty else {
-            return "Everything Raycast has built is already here. Import one again to update it."
+            return String(
+                localized:
+                    "Everything Raycast has built is already here. Import one again to update it."
+            )
         }
-        let count = fresh.count == 1 ? "one" : "\(fresh.count)"
-        return "The \(count) you don't have yet \(fresh.count == 1 ? "is" : "are") already ticked. "
-            + "Ticking one you have updates it."
+        return fresh.count == 1
+            ? String(
+                localized:
+                    "The one you don't have yet is already ticked. Ticking one you have updates it."
+            )
+            : String(
+                localized:
+                    "The \(fresh.count) you don't have yet are already ticked. Ticking one you have updates it."
+            )
     }
 
     private func detail(for candidate: RaycastImportCandidate) -> String {
         let count = candidate.installed.manifest.commands.count
-        let commands = "\(count) command\(count == 1 ? "" : "s")"
-        return candidate.isInstalled ? "\(commands) · installed — tick to update" : commands
+        let commands =
+            count == 1
+            ? String(localized: "1 command") : String(localized: "\(count) commands")
+        return candidate.isInstalled
+            ? String(localized: "\(commands) · installed — tick to update") : commands
     }
 
     private func binding(for candidate: RaycastImportCandidate) -> Binding<Bool> {

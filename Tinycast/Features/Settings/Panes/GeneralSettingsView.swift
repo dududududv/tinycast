@@ -16,12 +16,19 @@ struct GeneralSettingsView: View {
     /// The missing-permission half is its own row, so it can carry the button that fixes it.
     private var hyperSubtitle: String {
         guard settings.hyperKey != .none else {
-            return
-                "Select a physical key to remap to the \(hyperGlyphs) modifier keys simultaneously."
+            return String(
+                localized:
+                    "Select a physical key to remap to the \(hyperGlyphs) modifier keys simultaneously."
+            )
         }
-        return
-            "Pressing \(settings.hyperKey.title) will trigger the left \(hyperGlyphs) modifier keys."
-            + " Hyper Key shortcuts are shown in Tinycast with ✦."
+        let key = settings.hyperKey.title.localized
+        return String(
+            localized:
+                """
+                Pressing \(key) will trigger the left \(hyperGlyphs) modifier keys. \
+                Hyper Key shortcuts are shown in Tinycast with ✦.
+                """
+        )
     }
 
     var body: some View {
@@ -50,7 +57,10 @@ struct GeneralSettingsView: View {
                 Text("Search")
             } footer: {
                 Text(
-                    "Tinycast privately learns which results you choose for each query. Reset all learned choices to restore the default order."
+                    """
+                    Tinycast privately learns which results you choose for each query. \
+                    Reset all learned choices to restore the default order.
+                    """
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -87,13 +97,16 @@ struct GeneralSettingsView: View {
                     Picker(selection: $settings.hyperKeyQuickPress) {
                         Text("Does Nothing").tag(HyperKeyQuickPress.none)
                         if let original = settings.hyperKey.quickPressOriginalTitle {
-                            Text(original).tag(HyperKeyQuickPress.originalKey)
+                            Text(original.localized).tag(HyperKeyQuickPress.originalKey)
                         }
                         Text("Trigger Escape").tag(HyperKeyQuickPress.escape)
                     } label: {
                         Text("Quick Press")
                         Text(
-                            "Select an action to perform when \(settings.hyperKey.title) is pressed without any other keys."
+                            """
+                            Select an action to perform when \
+                            \(settings.hyperKey.title.localized) is pressed without any other keys.
+                            """
                         )
                     }
                 }

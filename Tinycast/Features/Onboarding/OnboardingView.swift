@@ -246,7 +246,7 @@ struct OnboardingView: View {
                     .controlSize(.large)
                     .disabled(true)
                 } else {
-                    Button(primaryTitle, action: primaryAction)
+                    Button(primaryTitle.localized, action: primaryAction)
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
                         .disabled(primaryDisabled)
@@ -300,7 +300,7 @@ struct OnboardingView: View {
     // MARK: - Shared bits
 
     private func caption(_ text: String) -> some View {
-        Text(text)
+        Text(text.localized)
             .font(.caption)
             .foregroundStyle(.tertiary)
             .padding(.horizontal, Theme.Spacing.xs)
@@ -319,7 +319,7 @@ struct OnboardingView: View {
     private func statusLine(_ message: String, systemImage: String, tint: Color) -> some View {
         HStack(alignment: .top, spacing: Theme.Spacing.sm) {
             Image(systemName: systemImage).foregroundStyle(tint)
-            Text(message).font(.caption).foregroundStyle(.secondary)
+            Text(message.localized).font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, Theme.Spacing.xs)
@@ -330,7 +330,10 @@ struct OnboardingView: View {
             Image(
                 systemName: accessibilityTrusted
                     ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-            Text(accessibilityTrusted ? "Granted" : "Not granted")
+            Text(
+                accessibilityTrusted
+                    ? String(localized: "Granted") : String(localized: "Not granted")
+            )
         }
         .font(.caption.weight(.semibold))
         .foregroundStyle(accessibilityTrusted ? Color.green : Color.orange)
@@ -376,9 +379,9 @@ final class OnboardingModel {
 
     var fileSubtitle: String {
         guard let name = file?.lastPathComponent else {
-            return "Choose a .rayconfig file exported from Raycast."
+            return String(localized: "Choose a .rayconfig file exported from Raycast.")
         }
-        return "\(name) — \(format?.title ?? "not a Raycast export")"
+        return "\(name) — \(format?.title.localized ?? String(localized: "not a Raycast export"))"
     }
 
     func chooseFile() {
@@ -399,10 +402,16 @@ final class OnboardingModel {
                     core: core, file: file, passphrase: passphrase, options: selection)
                 var message = BackupActions.summaryText(outcome.summary)
                 if outcome.clipboardImported > 0 {
-                    message += " Imported \(outcome.clipboardImported) clipboard entries."
+                    message += String(
+                        localized:
+                            " Imported \(outcome.clipboardImported) clipboard entries."
+                    )
                 }
                 if outcome.missingImages > 0 {
-                    message += " \(outcome.missingImages) images were unavailable and skipped."
+                    message += String(
+                        localized:
+                            " \(outcome.missingImages) images were unavailable and skipped."
+                    )
                 }
                 status = .success(message)
                 passphrase = ""
