@@ -266,6 +266,12 @@ feature is enabled. Activation hides the palette without restoring focus and cal
 Quicklinks. They represent collection actions rather than individual notes, so Notes adds no
 `AppEntry.Kind` or launcher section. See [notes.md](notes.md).
 
+## JSON editor command
+
+`CommandID.jsonEditor` is an always-available built-in command. Activation hides the transient
+palette and opens the normal document window through `JSONEditorCoordinator`; it adds no launcher
+section or `AppEntry.Kind`. See [json-editor.md](json-editor.md).
+
 > **Invariant:** `Tests/fuzz-test.swift` compiles the real `Tinycast/Features/Launcher/Model/SearchRelevance.swift`, so
 > that file must stay Foundation-only and pure. There is no copy of the scorer to keep in sync.
 

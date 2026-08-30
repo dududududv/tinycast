@@ -308,6 +308,9 @@
         }
       }
     },
+    "%lld lines" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%lld 行" } } }
+    },
     "%lld min" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1898,6 +1901,9 @@
         }
       }
     },
+    "Choose a JSON file to edit." : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择要编辑的 JSON 文件。" } } }
+    },
     "Choose the output volume." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2102,6 +2108,9 @@
         }
       }
     },
+    "Close Window" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关闭窗口" } } }
+    },
     "Codex CLI required" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2297,6 +2306,9 @@
         }
       }
     },
+    "Copy" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "复制" } } }
+    },
     "Copy %@" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2382,6 +2394,15 @@
           }
         }
       }
+    },
+    "Could not open JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法打开 JSON" } } }
+    },
+    "Could not save JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法保存 JSON" } } }
+    },
+    "Could not transform JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法处理 JSON" } } }
     },
     "Couldn't Open Note" : {
       "extractionState" : "stale",
@@ -2832,6 +2853,12 @@
           }
         }
       }
+    },
+    "Discard" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "放弃" } } }
+    },
+    "Discard unsaved JSON?" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "放弃未保存的 JSON？" } } }
     },
     "Disconnect" : {
       "localizations" : {
@@ -3642,6 +3669,12 @@
         }
       }
     },
+    "Format" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "格式化" } } }
+    },
+    "Format JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "格式化 JSON" } } }
+    },
     "Forward" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4397,6 +4430,22 @@
         }
       }
     },
+    "Invalid JSON — line %lld, column %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Invalid JSON — line %1$lld, column %2$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JSON 无效 — 第 %1$lld 行，第 %2$lld 列"
+          }
+        }
+      }
+    },
     "It goes on the calendar new events go to." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4448,6 +4497,18 @@
           }
         }
       }
+    },
+    "JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "JSON" } } }
+    },
+    "JSON Editor" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "JSON 编辑器" } } }
+    },
+    "JSON copied" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已复制 JSON" } } }
+    },
+    "JSON saved" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已保存 JSON" } } }
     },
     "Join" : {
       "extractionState" : "stale",
@@ -4794,6 +4855,22 @@
         }
       }
     },
+    "Line %lld, Column %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Line %1$lld, Column %2$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %1$lld 行，第 %2$lld 列"
+          }
+        }
+      }
+    },
     "Link" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5077,6 +5154,12 @@
         }
       }
     },
+    "Minify" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "压缩" } } }
+    },
+    "Minify JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "压缩 JSON" } } }
+    },
     "Mint" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5336,6 +5419,9 @@
         }
       }
     },
+    "New" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新建" } } }
+    },
     "New Chat" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5357,6 +5443,9 @@
           }
         }
       }
+    },
+    "New JSON Document" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新建 JSON 文档" } } }
     },
     "New Snippet" : {
       "localizations" : {
@@ -5932,6 +6021,9 @@
         }
       }
     },
+    "Open" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开" } } }
+    },
     "Open %@" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5983,6 +6075,9 @@
           }
         }
       }
+    },
+    "Open JSON…" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开 JSON…" } } }
     },
     "Open Quicklink" : {
       "extractionState" : "stale",
@@ -6241,6 +6336,9 @@
           }
         }
       }
+    },
+    "Paste or type JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "粘贴或输入 JSON" } } }
     },
     "Paste to %@" : {
       "localizations" : {
@@ -7195,6 +7293,15 @@
           }
         }
       }
+    },
+    "Save JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "保存 JSON" } } }
+    },
+    "Save JSON As…" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "JSON 另存为…" } } }
+    },
+    "Save the JSON document." : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "保存 JSON 文档。" } } }
     },
     "Save your shortcuts, custom commands, favorites, and preferences to JSON." : {
       "localizations" : {
@@ -9036,6 +9143,9 @@
         }
       }
     },
+    "Untitled.json" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未命名.json" } } }
+    },
     "Update Now" : {
       "localizations" : {
         "zh-Hans" : {
@@ -9105,6 +9215,9 @@
           }
         }
       }
+    },
+    "Valid JSON" : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "JSON 有效" } } }
     },
     "Version %@" : {
       "localizations" : {
@@ -9287,6 +9400,9 @@
           }
         }
       }
+    },
+    "Your changes have not been saved." : {
+      "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "更改尚未保存。" } } }
     },
     "Your home folder expands to its visible folders and cloud drives, never to its Library. An empty list searches nothing." : {
       "localizations" : {

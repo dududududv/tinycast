@@ -94,6 +94,7 @@ final class AppCore {
         settings: settings,
         appIndex: appIndex,
         core: self)
+    @ObservationIgnored private(set) lazy var jsonEditorCoordinator = JSONEditorCoordinator(core: self)
 
     @ObservationIgnored private(set) lazy var launcherCoordinator = LauncherCoordinator(
         ranking: launcherRanking, windowController: windowController,
@@ -106,6 +107,7 @@ final class AppCore {
         snippetExpansion: snippetExpansion, fileSearchCoordinator: fileSearchCoordinator,
         notesCoordinator: notesCoordinator, extensionCoordinator: extensionCoordinator,
         calendarCoordinator: calendarCoordinator,
+        jsonEditorCoordinator: jsonEditorCoordinator,
         core: self)
     @ObservationIgnored private(set) lazy var clipboardCoordinator = ClipboardCoordinator(
         clipboardStore: clipboardStore, palette: palette, windowController: windowController,
@@ -285,6 +287,7 @@ final class AppCore {
         if onboardingCoordinator.focusExisting() { return }
         if updateCoordinator.focusExisting() { return }
         if supportCoordinator.focusExisting() { return }
+        if jsonEditorCoordinator.focusExisting() { return }
         paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
     }
 

@@ -16,6 +16,7 @@ final class LauncherCoordinator {
     private let notesCoordinator: NotesCoordinator
     private let extensionCoordinator: ExtensionCoordinator
     private let calendarCoordinator: CalendarCoordinator
+    private let jsonEditorCoordinator: JSONEditorCoordinator
     /// The backup commands only, which need the live stores to gather from and apply to.
     private unowned let core: AppCore
 
@@ -33,6 +34,7 @@ final class LauncherCoordinator {
         notesCoordinator: NotesCoordinator,
         extensionCoordinator: ExtensionCoordinator,
         calendarCoordinator: CalendarCoordinator,
+        jsonEditorCoordinator: JSONEditorCoordinator,
         core: AppCore
     ) {
         self.ranking = ranking
@@ -48,6 +50,7 @@ final class LauncherCoordinator {
         self.notesCoordinator = notesCoordinator
         self.extensionCoordinator = extensionCoordinator
         self.calendarCoordinator = calendarCoordinator
+        self.jsonEditorCoordinator = jsonEditorCoordinator
         self.core = core
     }
 
@@ -125,6 +128,9 @@ final class LauncherCoordinator {
             paletteCoordinator.showPalette(mode: .emoji)
         case .searchFiles:
             fileSearchCoordinator.show()
+        case .jsonEditor:
+            paletteCoordinator.hidePalette(restoreFocus: false)
+            jsonEditorCoordinator.show()
         case .joinNextMeeting:
             calendarCoordinator.joinNextMeeting()
         case .copyMeetingLink:

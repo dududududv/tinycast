@@ -81,7 +81,7 @@ app: the stores (`AppIndex`, `ClipboardStore`, `SnippetsStore`, `QuicklinkStore`
 (`ClipboardManager`,
 `HotKeyManager`, `HyperKeyTap`, `RunningAppsMonitor`, `SnippetKeywordListener`), the shared state
 (`AppSettings`, `PaletteState`, `FileSearchSession`, `UninstallSession`,
-`QuicklinkArgumentSession`, `MeetingClock`), `NotesStore`, the eighteen feature coordinators, and the
+`QuicklinkArgumentSession`, `MeetingClock`), `NotesStore`, the feature coordinators, and the feature
 window controllers.
 
 `AppDelegate.applicationDidFinishLaunching` calls `AppCore.shared.start()` and nothing else. That is the
@@ -119,8 +119,12 @@ imperatively from AppKit.
   among local Markdown files and stays visible on focus loss. The displayed string is the canonical
   file source; Notes has no parser, rendered preview, or source/display mapping.
   See [features/notes.md](features/notes.md).
-- **The main menu** — shaped by `TinycastApp`'s `.commands`, which rebinds ⌘Q to Close Settings. It is
-  only ever on screen while a titled window is open, so it is Settings' menu bar. It must stay
+- **JSON editor** — a titled, resizable `AppWindowController` window with a native `NSToolbar` and a
+  TextKit 2 source editor. `JSONEditorCoordinator` owns document state, off-main validation and file
+  operations; the editor bridge owns selection, Find, Undo and marked text.
+  See [features/json-editor.md](features/json-editor.md).
+- **The main menu** — shaped by `TinycastApp`'s `.commands`, which rebinds ⌘Q to close the active
+  titled window and supplies document commands while the JSON editor is present. It must stay
   declarative.
 - **Dialogs** — borderless `DialogPanel`s driven by `DialogController`, the app's only presenter for
   confirmations, failure reports and value prompts. Presentation is `async`, so nothing blocks the main
@@ -202,7 +206,7 @@ Tinycast/
   Features/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top
     Launcher/ Clipboard/ Calculator/ Calendar/ Emoji/ FileSearch/ Notes/ Quicklinks/ Snippets/
-    Uninstall/ SystemActions/ CustomCommands/ HotKeys/ Backup/ WindowManagement/ Onboarding/
+    JSONEditor/ Uninstall/ SystemActions/ CustomCommands/ HotKeys/ Backup/ WindowManagement/ Onboarding/
     Updates/ Support/ AI/ Settings/
     Extensions/
         Model/      pure — the harness inputs

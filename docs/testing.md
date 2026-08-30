@@ -77,6 +77,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `scopes-test` | `Launcher/Model/SearchScopes.swift` |
 | `app-name-test` | `Platform/AppDisplayName.swift` — every path that names a scanned bundle |
 | `calc-test` | all of `Calculator/Model/` |
+| `json-editor-test` | `JSONEditor/Model/` — validation, formatting and syntax tokenization |
 | `calendar-test` | all of `Calendar/Model/` — link detection, the join window, the day buckets |
 | `clipboard-test` | `Clipboard/Model/ClipboardStore.swift` |
 | `emoji-test` | `Emoji/Model/EmojiCatalog.swift`, `EmojiGridGeometry.swift`, the generated data |
@@ -357,6 +358,15 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A bare amount (`1 usd`) answers in the Mac's region currency, and follows a change to
   System Settings ▸ General ▸ Language & Region without a relaunch — and nothing prompts for location
 - A crypto query (`1 btc`, `0.5 sol to eur`) answers, and `1 usd to btc` stays in plain notation
+
+### JSON editor
+
+- JSON Editor opens from the launcher in one resizable window and focuses the source editor
+- Invalid JSON reports its line and column; clicking the report moves the caret to the issue
+- Format, Minify, Copy, Open, Save and Save As work from both toolbar and keyboard commands
+- Strings, keys, numbers and literals use distinct syntax colours; line numbers track edits and scroll
+- Undo restores a Format or Minify operation, Find works, and CJK marked text remains exact
+- Closing, New or Open with unsaved changes asks before discarding them
 
 ### Calendar and meetings
 

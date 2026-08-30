@@ -29,7 +29,7 @@ struct TinycastApp: App {
             Button("Settings...") { AppCore.shared.settingsCoordinator.showSettings() }
                 .keyboardShortcut(",")
             Divider()
-            // No ⌘Q: the app menu binds it to Close Settings, and two contradictory ⌘Qs is a lie.
+            // No ⌘Q: the app menu binds it to Close Window, and two contradictory ⌘Qs is a lie.
             Button("Quit \(appName)") { NSApp.terminate(nil) }
         } label: {
             MenuBarLabel(appName: appName)
@@ -49,8 +49,30 @@ struct TinycastApp: App {
                 .keyboardShortcut(",")
         }
         CommandGroup(replacing: .appTermination) {
-            Button("Close Settings") { AppCore.shared.settingsCoordinator.closeSettings() }
+            Button("Close Window") { NSApp.keyWindow?.performClose(nil) }
                 .keyboardShortcut("q")
+        }
+        CommandMenu("JSON") {
+            Button("New JSON Document") {
+                AppCore.shared.jsonEditorCoordinator.show()
+                AppCore.shared.jsonEditorCoordinator.newDocument()
+            }
+            .keyboardShortcut("n")
+            Button("Open JSON…") {
+                AppCore.shared.jsonEditorCoordinator.show()
+                AppCore.shared.jsonEditorCoordinator.openDocument()
+            }
+            .keyboardShortcut("o")
+            Divider()
+            Button("Save JSON") { AppCore.shared.jsonEditorCoordinator.save() }
+                .keyboardShortcut("s")
+            Button("Save JSON As…") { AppCore.shared.jsonEditorCoordinator.saveAs() }
+                .keyboardShortcut("s", modifiers: [.command, .shift])
+            Divider()
+            Button("Format JSON") { AppCore.shared.jsonEditorCoordinator.format() }
+                .keyboardShortcut("f", modifiers: [.command, .shift])
+            Button("Minify JSON") { AppCore.shared.jsonEditorCoordinator.minify() }
+                .keyboardShortcut("m", modifiers: [.command, .option])
         }
     }
 }

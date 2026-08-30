@@ -85,6 +85,10 @@ final class AppWindowController: NSObject, NSWindowDelegate {
 
     // MARK: - NSWindowDelegate
 
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        chrome?.windowShouldClose(sender) ?? true
+    }
+
     func windowWillClose(_ notification: Notification) {
         guard let window else { return }
         self.window = nil
