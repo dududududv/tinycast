@@ -655,17 +655,14 @@ struct RootPaletteView: View {
                 .allowsHitTesting(vm.mode != .jsonEditor)
                 .accessibilityHidden(vm.mode == .jsonEditor)
             if vm.mode == .jsonEditor {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Text(core.jsonEditorCoordinator.state.displayName)
-                        .font(Theme.Typography.searchField)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    if core.jsonEditorCoordinator.state.isDirty {
-                        Circle()
-                            .fill(Theme.Colors.textTertiary)
-                            .frame(width: 6, height: 6)
-                            .accessibilityHidden(true)
-                    }
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "curlybraces")
+                        .font(Theme.Typography.bar)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                    Text("JSON Editor")
+                        .font(Theme.Typography.rowTitle.weight(.semibold))
+                        .foregroundStyle(Theme.Colors.textPrimary)
                 }
             }
         }

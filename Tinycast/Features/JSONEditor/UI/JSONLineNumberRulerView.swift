@@ -9,13 +9,18 @@ final class JSONLineNumberRulerView: NSRulerView {
         self.editor = editor
         super.init(scrollView: scrollView, orientation: .verticalRuler)
         clientView = editor
-        ruleThickness = 46
+        ruleThickness = 40
     }
 
     @available(*, unavailable)
     required init(coder: NSCoder) { fatalError() }
 
     override var isFlipped: Bool { true }
+    override var isOpaque: Bool { false }
+
+    override func draw(_ dirtyRect: NSRect) {
+        drawHashMarksAndLabels(in: dirtyRect)
+    }
 
     func updateLineCount() {
         guard let editor else { return }
