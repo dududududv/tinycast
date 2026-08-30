@@ -39,9 +39,8 @@ struct JSONEditorTests {
         check("pretty printing adds lines", pretty.contains("\n"))
         check("pretty printing indents values", pretty.contains("  \"enabled\""))
         check("pretty printing leaves slashes readable", pretty.contains("https://tinycast.app"))
-        check(
-            "pretty printing ends in one newline",
-            pretty.hasSuffix("\n") && !pretty.hasSuffix("\n\n"))
+        check("pretty printing ends at the closing brace", pretty.hasSuffix("}"))
+        check("pretty printing adds no trailing newline", !pretty.hasSuffix("\n"))
 
         let minified = try JSONEditorEngine.minified(pretty)
         check("minifying removes layout whitespace", !minified.contains("\n"))

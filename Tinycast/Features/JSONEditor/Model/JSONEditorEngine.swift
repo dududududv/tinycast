@@ -57,7 +57,7 @@ enum JSONEditorEngine {
         let data = try JSONSerialization.data(
             withJSONObject: value,
             options: [.prettyPrinted, .fragmentsAllowed, .withoutEscapingSlashes])
-        return String(decoding: data, as: UTF8.self) + "\n"
+        return String(decoding: data, as: UTF8.self)
     }
 
     static func minified(_ source: String) throws -> String {
