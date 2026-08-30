@@ -1,8 +1,8 @@
 # JSON editor
 
-JSON Editor is a built-in launcher command that opens a native, resizable document window. It edits
-UTF-8 JSON source directly: TextKit 2 owns selection, Undo/Redo, Find and marked text, while Tinycast
-adds line numbers, syntax colours and validation.
+JSON Editor is a built-in `PaletteScreen` rendered inside Tinycast's existing floating palette. It
+edits UTF-8 JSON source directly: TextKit 2 owns selection, Undo/Redo, Find and marked text, while
+Tinycast adds line numbers, syntax colours and validation without opening another editor window.
 
 ## Invariants
 
@@ -14,7 +14,8 @@ adds line numbers, syntax colours and validation.
   older parse can never overwrite the status of newer text.
 - A file becomes clean only after the exact source written to disk is still current when the write
   finishes. Editing during a save leaves the document marked as changed.
-- New, Open and window close never discard an edited document without Tinycast's own confirmation.
+- Leaving or hiding the palette retains the draft. New and Open never discard an edited document
+  without Tinycast's own confirmation.
 
 ## Structure
 
@@ -22,11 +23,12 @@ adds line numbers, syntax colours and validation.
 | --- | --- |
 | `Model/JSONEditorEngine.swift` | validation, pretty/minified output, issue positions and syntax tokens |
 | `Service/JSONFileService.swift` | UTF-8 reads and atomic writes |
-| `UI/JSONEditorCoordinator.swift` | window lifecycle, file panels, transformations and confirmations |
+| `UI/JSONEditorCoordinator.swift` | palette entry, file panels, transformations and confirmations |
+| `UI/JSONEditorScreen.swift` | palette rows, footer action and the ⌘K action menu |
 | `UI/JSONSourceEditor.swift` | the narrow TextKit 2 bridge and syntax application |
 | `UI/JSONLineNumberRulerView.swift` | scrolling line numbers and click-to-select-line behavior |
-| `UI/JSONEditorToolbarController.swift` | native macOS toolbar and document-edited state |
+| `UI/JSONEditorView.swift` | inline controls, source surface and status rows |
 
 The editor is owned by `AppCore` and reached through `JSONEditorCoordinator`. The launcher command
-hides the transient palette before opening the normal-level window. Closing tears down the window and
-its SwiftUI/AppKit view tree; the coordinator remains the single long-lived owner.
+switches `PaletteMode` to `.jsonEditor`; the coordinator remains the single long-lived owner so a
+click-away or Pop to Root transition cannot lose an unsaved draft.

@@ -129,7 +129,6 @@ final class LauncherCoordinator {
         case .searchFiles:
             fileSearchCoordinator.show()
         case .jsonEditor:
-            paletteCoordinator.hidePalette(restoreFocus: false)
             jsonEditorCoordinator.show()
         case .joinNextMeeting:
             calendarCoordinator.joinNextMeeting()

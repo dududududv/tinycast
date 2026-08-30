@@ -1,5 +1,4 @@
 import AppKit
-import SwiftUI
 import UniformTypeIdentifiers
 
 @MainActor
@@ -7,33 +6,18 @@ final class JSONEditorCoordinator {
     let state = JSONEditorState()
 
     private unowned let core: AppCore
-    private lazy var window = AppWindowController(
-        title: String(localized: "JSON Editor"), contentSize: Theme.Size.jsonEditorWindow,
-        resizable: true,
-        autosaveName: "JSON Editor Window", activation: core.activationPolicy)
     private weak var textView: JSONEditorTextView?
     private var validationTask: Task<Void, Never>?
     private var operationTask: Task<Void, Never>?
     private var decisionTask: Task<Void, Never>?
-    private var closeTask: Task<Void, Never>?
 
     init(core: AppCore) {
         self.core = core
     }
 
     func show() {
-        if window.focus() {
-            focusEditor()
-            return
-        }
-        window.show(chrome: JSONEditorToolbarController(editor: self, state: state)) {
-            JSONEditorView(editor: self)
-                .environment(self.state)
-        }
-    }
-
-    func focusExisting() -> Bool {
-        window.focus()
+        core.paletteCoordinator.showPalette(mode: .jsonEditor)
+        focusEditor()
     }
 
     func editorReady(_ textView: JSONEditorTextView) {
@@ -66,7 +50,9 @@ final class JSONEditorCoordinator {
             panel.canChooseDirectories = false
             panel.prompt = String(localized: "Open")
             panel.message = String(localized: "Choose a JSON file to edit.")
-            guard panel.runModal() == .OK, let url = panel.url else { return }
+            let response = panel.runModal()
+            self.restorePalette()
+            guard response == .OK, let url = panel.url else { return }
             self.load(url)
         }
     }
@@ -86,7 +72,9 @@ final class JSONEditorCoordinator {
         panel.nameFieldStringValue = state.displayName
         panel.prompt = String(localized: "Save")
         panel.message = String(localized: "Save the JSON document.")
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let response = panel.runModal()
+        restorePalette()
+        guard response == .OK, let url = panel.url else { return }
         write(to: url)
     }
 
@@ -109,29 +97,31 @@ final class JSONEditorCoordinator {
         textView?.moveCaret(to: issue.utf16Offset)
     }
 
-    func windowShouldClose(_ window: NSWindow) -> Bool {
-        guard state.isDirty else { return true }
-        guard closeTask == nil else { return false }
-        closeTask = Task { @MainActor [weak self, weak window] in
-            guard let self else { return }
-            let discard = await core.confirm(
-                title: String(localized: "Discard unsaved JSON?"),
-                message: String(localized: "Your changes have not been saved."),
-                symbol: "curlybraces", confirmTitle: String(localized: "Discard"))
-            closeTask = nil
-            guard discard, let window else { return }
-            state.revert()
-            window.performClose(nil)
-        }
-        return false
+    func dismiss() {
+        core.paletteCoordinator.hidePalette()
     }
 
-    private func focusEditor() {
+    func focusEditor() {
         Task { @MainActor [weak textView] in
             await Task.yield()
             guard let textView, let window = textView.window else { return }
             window.makeFirstResponder(textView)
         }
+    }
+
+    func handleCommandShortcut(
+        _ character: String, modifiers: NSEvent.ModifierFlags
+    ) -> Bool {
+        switch (character, modifiers) {
+        case ("n", [.command]): newDocument()
+        case ("o", [.command]): openDocument()
+        case ("s", [.command]): save()
+        case ("s", [.command, .shift]): saveAs()
+        case ("f", [.command, .shift]): format()
+        case ("m", [.command, .option]): minify()
+        default: return false
+        }
+        return true
     }
 
     private func analyze(_ source: String, revision: Int, immediately: Bool = false) {
@@ -193,6 +183,11 @@ final class JSONEditorCoordinator {
             }
             action()
         }
+    }
+
+    private func restorePalette() {
+        core.paletteCoordinator.showPalette(mode: .jsonEditor, restoreAnyMode: true)
+        focusEditor()
     }
 
     private func load(_ url: URL) {

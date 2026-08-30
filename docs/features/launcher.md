@@ -268,9 +268,9 @@ Quicklinks. They represent collection actions rather than individual notes, so N
 
 ## JSON editor command
 
-`CommandID.jsonEditor` is an always-available built-in command. Activation hides the transient
-palette and opens the normal document window through `JSONEditorCoordinator`; it adds no launcher
-section or `AppEntry.Kind`. See [json-editor.md](json-editor.md).
+`CommandID.jsonEditor` is an always-available built-in command. Activation switches the existing
+palette to `.jsonEditor` through `JSONEditorCoordinator`; it opens no additional window and adds no
+launcher section or `AppEntry.Kind`. See [json-editor.md](json-editor.md).
 
 > **Invariant:** `Tests/fuzz-test.swift` compiles the real `Tinycast/Features/Launcher/Model/SearchRelevance.swift`, so
 > that file must stay Foundation-only and pure. There is no copy of the scorer to keep in sync.

@@ -63,6 +63,9 @@ struct RootPaletteView: View {
         case .fileSearch:
             return FileSearchScreen(
                 session: fileSearch, core: core, vm: vm, openActions: openActions)
+        case .jsonEditor:
+            return JSONEditorScreen(
+                state: core.jsonEditorCoordinator.state, editor: core.jsonEditorCoordinator)
         case .schedule:
             return ScheduleScreen(
                 store: calendarStore, clock: meetingClock, core: core, vm: vm,
@@ -244,7 +247,12 @@ struct RootPaletteView: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
         // Every show bumps focusToken: refocus search and drop any menu left open.
         .onChange(of: vm.focusToken) {
-            searchFocused = true
+            if vm.mode == .jsonEditor {
+                searchFocused = false
+                core.jsonEditorCoordinator.focusEditor()
+            } else {
+                searchFocused = true
+            }
             openMenu = nil
         }
         .onChange(of: vm.query) {
@@ -275,6 +283,13 @@ struct RootPaletteView: View {
             }
             // Same for a half-filled argument form: leaving the screen abandons the pending open.
             if vm.mode != .quicklinkArguments { core.quicklinkCoordinator.cancelQuicklinkArguments() }
+            if vm.mode == .jsonEditor {
+                searchFocused = false
+                vm.searchFieldFrame = .zero
+                core.jsonEditorCoordinator.focusEditor()
+            } else {
+                searchFocused = true
+            }
         }
         // `prepare` may change nothing, so this intent still snaps the scroll to the origin.
         .onChange(of: vm.resetToken) {
@@ -288,13 +303,17 @@ struct RootPaletteView: View {
         .onChange(of: openMenu) {
             vm.menuOpen = menuOpen
         }
-        .onAppear { searchFocused = true }
+        .onAppear {
+            searchFocused = vm.mode != .jsonEditor
+            if vm.mode == .jsonEditor { core.jsonEditorCoordinator.focusEditor() }
+        }
         // Several paths flip `paletteIsCollapsed`, so resize the window to match.
         .onChange(of: core.paletteCoordinator.paletteIsCollapsed) {
             core.paletteCoordinator.syncPaletteSize()
         }
         // Repeat included: holding the key must keep stepping, as the bare-key form does by default.
         .onKeyPress(keys: [.downArrow], phases: [.down, .repeat]) { press in
+            if vm.mode == .jsonEditor { return .ignored }
             if let reorder = moveFavorite(1, modifiers: press.modifiers) { return reorder }
             if isCollapsed {
                 // The compact bar shows no selection, so Down reveals the list's first row.
@@ -310,6 +329,7 @@ struct RootPaletteView: View {
             return .handled
         }
         .onKeyPress(keys: [.upArrow], phases: [.down, .repeat]) { press in
+            if vm.mode == .jsonEditor { return .ignored }
             if let reorder = moveFavorite(-1, modifiers: press.modifiers) { return reorder }
             if isCollapsed { return .ignored }
             if menuOpen {
@@ -358,6 +378,7 @@ struct RootPaletteView: View {
             return .handled
         }
         .onKeyPress(.tab) {
+            if vm.mode == .jsonEditor { return .ignored }
             if !menuOpen { advanceTabFocus() }
             return .handled
         }
@@ -487,7 +508,7 @@ struct RootPaletteView: View {
             // One structural position, always: putting the field inside a branch tears down its
             // field editor when the branch flips, which drops first responder mid-navigation.
             // The width shrinks to the typed text so argument fields sit right after it, as in Raycast.
-            searchField.frame(width: headerAccessory.map(searchFieldWidth))
+            headerField.frame(width: headerAccessory.map(searchFieldWidth))
             if let accessory = headerAccessory {
                 accessory.view
                 Spacer(minLength: 0)
@@ -623,8 +644,31 @@ struct RootPaletteView: View {
             .onGeometryChange(for: CGRect.self) {
                 $0.frame(in: .global)
             } action: {
-                vm.searchFieldFrame = $0
+                vm.searchFieldFrame = vm.mode == .jsonEditor ? .zero : $0
             }
+    }
+
+    private var headerField: some View {
+        ZStack(alignment: .leading) {
+            searchField
+                .opacity(vm.mode == .jsonEditor ? 0 : 1)
+                .allowsHitTesting(vm.mode != .jsonEditor)
+                .accessibilityHidden(vm.mode == .jsonEditor)
+            if vm.mode == .jsonEditor {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Text(core.jsonEditorCoordinator.state.displayName)
+                        .font(Theme.Typography.searchField)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    if core.jsonEditorCoordinator.state.isDirty {
+                        Circle()
+                            .fill(Theme.Colors.textTertiary)
+                            .frame(width: 6, height: 6)
+                            .accessibilityHidden(true)
+                    }
+                }
+            }
+        }
     }
 
     /// The Uninstall screen's primary action is destructive, so its pill isn't white.

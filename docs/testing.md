@@ -361,12 +361,12 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 
 ### JSON editor
 
-- JSON Editor opens from the launcher in one resizable window and focuses the source editor
+- JSON Editor replaces the launcher results inside the existing palette and focuses the source editor
 - Invalid JSON reports its line and column; clicking the report moves the caret to the issue
-- Format, Minify, Copy, Open, Save and Save As work from both toolbar and keyboard commands
+- Format, Minify, Copy, Open, Save and Save As work from the inline controls and keyboard commands
 - Strings, keys, numbers and literals use distinct syntax colours; line numbers track edits and scroll
 - Undo restores a Format or Minify operation, Find works, and CJK marked text remains exact
-- Closing, New or Open with unsaved changes asks before discarding them
+- Hiding or leaving the palette preserves the draft; New or Open asks before discarding unsaved text
 
 ### Calendar and meetings
 

@@ -133,7 +133,7 @@ enum Theme {
         static let chatAttachmentGlyph: CGFloat = 16
         /// Opening size and the resize floor; tall enough that the sidebar's rows never scroll.
         static let settingsWindow = CGSize(width: 860, height: 700)
-        static let jsonEditorWindow = CGSize(width: 900, height: 620)
+        static let jsonEditorToolbar: CGFloat = 38
         static let jsonEditorStatusBar: CGFloat = 28
         /// Settings sidebar: a fixed column, wide enough for "Window Management".
         static let settingsSidebar: CGFloat = 215

@@ -251,6 +251,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         panel.onBareBackspace = { [weak self] in
             guard let core = self?.core, core.palette.mode != .launcher, core.palette.query.isEmpty
             else { return false }
+            if core.palette.mode == .jsonEditor { return false }
             // The argument form steps back through the answers first, one key per field.
             if core.palette.mode == .quicklinkArguments,
                 let previous = core.quicklinkArguments.retreat()
@@ -271,9 +272,17 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         }
         // Handled at the panel: the field editor or a missing main menu eats these first.
         panel.onCommandShortcut = { [weak self] event in
-            guard let self, !event.isARepeat,
-                event.modifierFlags.intersection([.command, .option, .control, .shift]) == .command
-            else { return false }
+            guard let self, !event.isARepeat else { return false }
+            let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
+            guard modifiers.contains(.command) else { return false }
+            let character = event.charactersIgnoringModifiers?.lowercased()
+            if self.core.palette.mode == .jsonEditor, let character,
+                self.core.jsonEditorCoordinator.handleCommandShortcut(
+                    character, modifiers: modifiers)
+            {
+                return true
+            }
+            guard modifiers == .command else { return false }
             if self.core.palette.mode == .launcher || self.core.palette.mode == .clipboard,
                 let index = FavoriteSlots.index(forKeyCode: event.keyCode)
             {
@@ -286,7 +295,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
                 return true
             }
             // Character chords, not key codes: Dvorak transposes the two.
-            guard let character = event.charactersIgnoringModifiers?.lowercased() else { return false }
+            guard let character else { return false }
             switch character {
             case ",":
                 self.core.settingsCoordinator.showSettings()

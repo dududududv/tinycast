@@ -24,6 +24,7 @@
 		089C174783A60216FCC952B3 /* SpotlightNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0ABE4AF80DD5F5F8E91F63E /* SpotlightNames.swift */; };
 		0A086C5452FD9FCE68AF4E46 /* InputSourceSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FCD070CDE64691E5F6ED28D /* InputSourceSwitcher.swift */; };
 		0B9C941402B85C69A33200C2 /* UninstallProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A48095F6487DEE76663F88 /* UninstallProtection.swift */; };
+		0BC288252B1FC8FFAD316B20 /* JSONEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20106B4B475E19CE19603B6 /* JSONEditorScreen.swift */; };
 		0C1CACEF014462D3F581CE54 /* EmojiSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B42664C60B760276FBAAD61 /* EmojiSettingsView.swift */; };
 		0D8A65A0A7A2188F56D576FF /* Quarantine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4984C964DC144E213DF4F63 /* Quarantine.swift */; };
 		0DD808F80666846F4E74BAD8 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23591B301A183579098AA019 /* OnboardingView.swift */; };
@@ -208,7 +209,6 @@
 		7FF6A0A4702E1C1365F2D76A /* LauncherScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97A8C3E88FEBCBBEADF415B /* LauncherScreen.swift */; };
 		8090FBE343746D9D43EE2B24 /* PalettePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA9F3FA9925873D25EAF7D03 /* PalettePanel.swift */; };
 		80E77985425032856DEECDFD /* CalloutShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92AF20F1007F7F3DC1013C2A /* CalloutShape.swift */; };
-		81784B2A5C6A8227E84C6F7E /* JSONEditorToolbarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07DDF9CBCAF7135619D6CC49 /* JSONEditorToolbarController.swift */; };
 		82D95EF7539498A9A484B3D1 /* SystemActionsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEEB022D080E6DAF703D8132 /* SystemActionsSettingsView.swift */; };
 		8453CF4C0D8D015A66C9B400 /* HoverArming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D4C3D9FA2F775DC650985D8 /* HoverArming.swift */; };
 		84A1F72DA5038C3725DCA201 /* FileSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B96B69CB4E52319BB3EC7D /* FileSearchService.swift */; };
@@ -413,7 +413,6 @@
 		0548C62E98174F92E13437FB /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 		06125F7DDE68BB4D52065C06 /* WindowCommandCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCommandCoordinator.swift; sourceTree = "<group>"; };
 		06A3B5DFECC1B19256508E7B /* JSONLineNumberRulerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONLineNumberRulerView.swift; sourceTree = "<group>"; };
-		07DDF9CBCAF7135619D6CC49 /* JSONEditorToolbarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONEditorToolbarController.swift; sourceTree = "<group>"; };
 		08279257B0F5995E86FF2C03 /* EntryIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryIconView.swift; sourceTree = "<group>"; };
 		08A1D354C1785923E612848C /* RenderNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderNode.swift; sourceTree = "<group>"; };
 		08C0A136166F7235A59A0462 /* JSONEditorTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONEditorTextView.swift; sourceTree = "<group>"; };
@@ -758,6 +757,7 @@
 		DF0880635E294D9DF55BAADA /* CustomCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCommand.swift; sourceTree = "<group>"; };
 		E01488803F8025B0523D44BA /* RelaunchRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelaunchRunner.swift; sourceTree = "<group>"; };
 		E1FB75182A60F65BA1FB9BA8 /* NotificationToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationToken.swift; sourceTree = "<group>"; };
+		E20106B4B475E19CE19603B6 /* JSONEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONEditorScreen.swift; sourceTree = "<group>"; };
 		E27FB790A72ACD75DFCDFDDF /* VolumeSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeSlider.swift; sourceTree = "<group>"; };
 		E44875ABECB1F1B648EC90F4 /* SupportWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportWindowView.swift; sourceTree = "<group>"; };
 		E475F373557FD3524086CE19 /* MeetingCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingCalendar.swift; sourceTree = "<group>"; };
@@ -1497,9 +1497,9 @@
 			isa = PBXGroup;
 			children = (
 				393D2184AE9C8917FFEFC101 /* JSONEditorCoordinator.swift */,
+				E20106B4B475E19CE19603B6 /* JSONEditorScreen.swift */,
 				E5EAC39A585E77520FCC0201 /* JSONEditorState.swift */,
 				08C0A136166F7235A59A0462 /* JSONEditorTextView.swift */,
-				07DDF9CBCAF7135619D6CC49 /* JSONEditorToolbarController.swift */,
 				4268C2C92A8E601D3F060423 /* JSONEditorView.swift */,
 				06A3B5DFECC1B19256508E7B /* JSONLineNumberRulerView.swift */,
 				47831C42588F3EC4A0A6612B /* JSONSourceEditor.swift */,
@@ -2330,9 +2330,9 @@
 				0A086C5452FD9FCE68AF4E46 /* InputSourceSwitcher.swift in Sources */,
 				96740EF455CDC10A62663596 /* JSONEditorCoordinator.swift in Sources */,
 				F61F5FCC19C43D351ECFD7E5 /* JSONEditorEngine.swift in Sources */,
+				0BC288252B1FC8FFAD316B20 /* JSONEditorScreen.swift in Sources */,
 				00EE23364C3F1BE1A4AE5ADD /* JSONEditorState.swift in Sources */,
 				C179F6C378F8882AFD342C10 /* JSONEditorTextView.swift in Sources */,
-				81784B2A5C6A8227E84C6F7E /* JSONEditorToolbarController.swift in Sources */,
 				631F08D0D18C9EB521B79F57 /* JSONEditorView.swift in Sources */,
 				8E04E312FED15313482CA9A7 /* JSONFileService.swift in Sources */,
 				206EDFC9673A1499CFD56685 /* JSONLineNumberRulerView.swift in Sources */,

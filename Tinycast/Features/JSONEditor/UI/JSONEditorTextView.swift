@@ -3,8 +3,13 @@ import AppKit
 @MainActor
 final class JSONEditorTextView: NSTextView {
     var editorUndoManager: UndoManager?
+    var onEscape: (() -> Void)?
 
     override var undoManager: UndoManager? { editorUndoManager }
+
+    override func cancelOperation(_ sender: Any?) {
+        onEscape?()
+    }
 
     func replaceAll(with source: String) {
         let range = NSRange(location: 0, length: (string as NSString).length)

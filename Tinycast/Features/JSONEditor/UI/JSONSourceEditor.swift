@@ -6,6 +6,7 @@ struct JSONSourceEditor: NSViewRepresentable {
     let onSourceChange: (String) -> Void
     let onCursorChange: (Int, Int) -> Void
     let onReady: (JSONEditorTextView) -> Void
+    let onEscape: () -> Void
 
     static let editorFont = NSFont.monospacedSystemFont(
         ofSize: NSFont.systemFontSize, weight: .regular)
@@ -28,6 +29,7 @@ struct JSONSourceEditor: NSViewRepresentable {
         Self.configure(textView)
         textView.delegate = context.coordinator
         textView.editorUndoManager = context.coordinator.editorUndoManager
+        textView.onEscape = onEscape
         scrollView.documentView = textView
 
         let ruler = JSONLineNumberRulerView(scrollView: scrollView, editor: textView)
@@ -43,6 +45,7 @@ struct JSONSourceEditor: NSViewRepresentable {
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         context.coordinator.parent = self
+        context.coordinator.textView?.onEscape = onEscape
         context.coordinator.update(input)
     }
 

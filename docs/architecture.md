@@ -119,12 +119,11 @@ imperatively from AppKit.
   among local Markdown files and stays visible on focus loss. The displayed string is the canonical
   file source; Notes has no parser, rendered preview, or source/display mapping.
   See [features/notes.md](features/notes.md).
-- **JSON editor** — a titled, resizable `AppWindowController` window with a native `NSToolbar` and a
-  TextKit 2 source editor. `JSONEditorCoordinator` owns document state, off-main validation and file
-  operations; the editor bridge owns selection, Find, Undo and marked text.
-  See [features/json-editor.md](features/json-editor.md).
-- **The main menu** — shaped by `TinycastApp`'s `.commands`, which rebinds ⌘Q to close the active
-  titled window and supplies document commands while the JSON editor is present. It must stay
+- **JSON editor** — a `PaletteScreen` inside the command palette, not another window. Its narrow
+  TextKit 2 bridge owns selection, Find, Undo and marked text; `JSONEditorCoordinator` owns document
+  state, off-main validation and file operations. See [features/json-editor.md](features/json-editor.md).
+- **The main menu** — shaped by `TinycastApp`'s `.commands`, which rebinds ⌘Q to Close Settings. It is
+  only ever on screen while a titled window is open, so it is Settings' menu bar. It must stay
   declarative.
 - **Dialogs** — borderless `DialogPanel`s driven by `DialogController`, the app's only presenter for
   confirmations, failure reports and value prompts. Presentation is `async`, so nothing blocks the main

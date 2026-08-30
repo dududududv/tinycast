@@ -104,6 +104,8 @@ final class PalettePanel: NSPanel {
     /// area — so the panel settles it from the field's own frame, after `super` has had its say.
     private func applyCursorPolicy(for event: NSEvent) {
         guard Self.cursorEvents.contains(event.type) else { return }
+        // The inline JSON surface owns an actual NSTextView, whose tracking area supplies its I-beam.
+        if paletteState?.mode == .jsonEditor { return }
         // Outset: the field editor AppKit installs is a point taller than the field it serves.
         let text = searchFieldRect.insetBy(dx: -Self.fieldEditorSlack, dy: -Self.fieldEditorSlack)
         let cursor: NSCursor =

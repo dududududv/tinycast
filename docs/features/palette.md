@@ -53,7 +53,8 @@ only the closure wiring; the behaviour is `PaletteCoordinator`'s.
 
 `PaletteState` (mode / query / selection / `focusToken`) is the bridge between the panel and the app.
 Showing the palette calls `prepare(mode:)`, which resets state and bumps `focusToken` (a UUID) so the
-SwiftUI search field re-focuses.
+SwiftUI search field re-focuses. `.jsonEditor` is the exception: the token focuses its TextKit editor
+while the still-mounted search field becomes an invisible structural placeholder in the header.
 
 Hiding schedules Pop to Root Search, and `PaletteWindowController.popToRoot` is its only path: the
 palette returns to the launcher *and* chat starts a new conversation, at once or after
@@ -74,6 +75,7 @@ palette indexes into it. Adding a mode means adding a conformer, not a branch in
 | `.calculatorHistory` | `CalculatorHistoryScreen` | `CalculatorHistoryList` |
 | `.emoji` | `EmojiScreen` | `EmojiGridView` |
 | `.fileSearch` | `FileSearchScreen` | `FileSearchList` (see [file-search.md](file-search.md)) |
+| `.jsonEditor` | `JSONEditorScreen` | `JSONEditorView` (see [json-editor.md](json-editor.md)) |
 | `.schedule` | `ScheduleScreen` | `ScheduleList` (see [calendar.md](calendar.md)) |
 | `.uninstall` | `UninstallScreen` | `UninstallList` (see [uninstall.md](uninstall.md)) |
 | `.quicklinks` | `QuicklinkListScreen` | `QuicklinkList` |
@@ -105,6 +107,10 @@ Its own state lives on `AppCore.quicklinkArguments`, the way `.uninstall`'s targ
 `UninstallSession`, and leaving the mode cancels the pending open. A bare backspace steps back an
 argument before it falls through to the usual exit-to-launcher; Escape erases the half-typed answer
 first, and a second press hides the palette, which ends the pending open with it.
+
+The JSON editor also lends focus away from the search field, but never removes that field from the
+header hierarchy. The hidden field keeps the same structural position while the file name is drawn in
+front of it, so entering or leaving the editor cannot tear down the panel's shared field editor.
 
 ### Inline command arguments
 
