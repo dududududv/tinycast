@@ -40,8 +40,14 @@ struct ExtensionRegistriesSheet: View {
                     Text("Raycast Store")
                 } footer: {
                     Text(
-                        "Prebuilt extensions, through the endpoint the store's own site searches. "
-                            + "Not an official API, so a GitHub registry is the fallback if it changes."
+                        String(
+                            localized:
+                                """
+                                Prebuilt extensions, through the endpoint the store's own site \
+                                searches. Not an official API, so a GitHub registry is the fallback \
+                                if it changes.
+                                """
+                        )
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -67,10 +73,15 @@ struct ExtensionRegistriesSheet: View {
                     Text("GitHub Registries")
                 } footer: {
                     Text(
-                        "A repository with one folder per extension, laid out like "
-                            + "raycast/extensions. These serve source, so installing one builds it "
-                            + "here — dependencies first, with the package manager above. Add a "
-                            + "registry only if you trust who publishes it."
+                        String(
+                            localized:
+                                """
+                                A repository with one folder per extension, laid out like \
+                                raycast/extensions. These serve source, so installing one builds it \
+                                here — dependencies first, with the package manager above. Add a \
+                                registry only if you trust who publishes it.
+                                """
+                        )
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -108,7 +119,7 @@ struct ExtensionRegistriesSheet: View {
     }
 
     private func registryRow(_ registry: ExtensionRegistry) -> some View {
-        SettingsRow(title: registry.name, subtitle: registry.subtitle) {
+        SettingsRow(title: registry.name, subtitle: subtitle(for: registry)) {
             registryIcon(registry)
         } trailing: {
             Toggle("", isOn: binding(for: registry))
@@ -133,7 +144,9 @@ struct ExtensionRegistriesSheet: View {
 
     private var buildingRow: some View {
         @Bindable var settings = core.settings
-        return SettingsRow(title: "Package manager", subtitle: packageManagerDetail) {
+        return SettingsRow(
+            title: String(localized: "Package manager"), subtitle: packageManagerDetail
+        ) {
             Image(systemName: "shippingbox")
                 .foregroundStyle(.secondary)
         } trailing: {
@@ -172,7 +185,7 @@ struct ExtensionRegistriesSheet: View {
     /// of wrapping — unreadable for anything longer than a few words.
     private var customSearchPathsRow: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            SettingsRow(title: "Custom search paths") {
+            SettingsRow(title: String(localized: "Custom search paths")) {
                 Image(systemName: "folder.badge.gearshape")
                     .foregroundStyle(.secondary)
             } trailing: {
@@ -189,9 +202,14 @@ struct ExtensionRegistriesSheet: View {
                 }
             }
             Text(
-                "Colon-separated, like PATH — checked before Homebrew and the rest. For mise: "
-                    + "~/.local/share/mise/shims. For Nix (Home Manager): "
-                    + "/etc/profiles/per-user/<you>/home-path/bin."
+                String(
+                    localized:
+                        """
+                        Colon-separated, like PATH — checked before Homebrew and the rest. For mise: \
+                        ~/.local/share/mise/shims. For Nix (Home Manager): \
+                        /etc/profiles/per-user/<you>/home-path/bin.
+                        """
+                )
             )
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -204,6 +222,15 @@ struct ExtensionRegistriesSheet: View {
         text.split(separator: ":", omittingEmptySubsequences: true)
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+    }
+
+    private func subtitle(for registry: ExtensionRegistry) -> String {
+        switch registry.kind {
+        case .raycastStore:
+            return String(localized: "Installs without Node or a package manager.")
+        case .github:
+            return registry.subtitle
+        }
     }
 
     @ViewBuilder
@@ -253,8 +280,10 @@ struct RegistryEditorSheet: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text("Add Registry").font(.title2.weight(.bold))
                 Text(
-                    "A GitHub repository holding one folder per extension, laid out like "
-                        + "raycast/extensions."
+                    String(
+                        localized:
+                            "A GitHub repository holding one folder per extension, laid out like raycast/extensions."
+                    )
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -269,7 +298,10 @@ struct RegistryEditorSheet: View {
 
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text("Name").font(.callout.weight(.medium))
-                TextField("", text: $name, prompt: Text(parsed?.name ?? "Optional"))
+                TextField(
+                    "", text: $name,
+                    prompt: Text(parsed?.name ?? String(localized: "Optional"))
+                )
                     .textFieldStyle(.roundedBorder)
                     .pointerStyle(.horizontalText)
             }
@@ -290,8 +322,13 @@ struct RegistryEditorSheet: View {
             }
 
             Text(
-                "Extensions from a repository are source: installing one runs your package manager "
-                    + "and the extension's own build script on this Mac."
+                String(
+                    localized:
+                        """
+                        Extensions from a repository are source: installing one runs your package \
+                        manager and the extension's own build script on this Mac.
+                        """
+                )
             )
             .font(.caption)
             .foregroundStyle(.secondary)

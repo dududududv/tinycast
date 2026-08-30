@@ -30,16 +30,16 @@ struct CameraPreviewView: View {
         case .live(let capture):
             CameraFeed(session: capture)
         case .denied:
-            unavailable("Tinycast has no access to the camera.")
+            unavailable(String(localized: "Tinycast has no access to the camera."))
         case .noCamera:
-            unavailable("No camera on this Mac.")
+            unavailable(String(localized: "No camera on this Mac."))
         }
     }
 
     private func unavailable(_ message: String) -> some View {
         VStack(spacing: Theme.Spacing.md) {
             SymbolImage(name: "video.slash", size: Theme.Size.dialogIcon)
-            Text(message.localized)
+            Text(message)
                 .font(Theme.Typography.rowTrailing)
                 .multilineTextAlignment(.center)
         }

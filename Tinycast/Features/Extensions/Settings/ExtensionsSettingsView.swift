@@ -22,11 +22,16 @@ struct ExtensionsSettingsView: View {
         return Form {
             FeatureSwitchSection(
                 header: "Extensions",
-                enableTitle: "Enable extensions",
-                enableSubtitle:
-                    "Run Raycast extensions natively. A running command holds a JavaScript engine "
-                    + "in memory until you leave it.",
-                launcherSubtitle: "List every extension's commands in launcher search.",
+                enableTitle: String(localized: "Enable extensions"),
+                enableSubtitle: String(
+                    localized:
+                        """
+                        Run Raycast extensions natively. A running command holds a JavaScript engine \
+                        in memory until you leave it.
+                        """
+                ),
+                launcherSubtitle: String(
+                    localized: "List every extension's commands in launcher search."),
                 // Enabling is also consent to run third-party code, so it uses the confirming setter.
                 isEnabled: Binding(
                     get: { settings.extensionsEnabled },
@@ -87,16 +92,28 @@ struct ExtensionsSettingsView: View {
             } label: {
                 Label("What works", systemImage: "checkmark.circle")
                 Text(
-                    "List, detail, form and grid commands, and ones that just run. Preferences, "
-                        + "arguments, storage, the clipboard, toasts and HUDs.")
+                    String(
+                        localized:
+                            """
+                            List, detail, form and grid commands, and ones that just run. \
+                            Preferences, arguments, storage, the clipboard, toasts and HUDs.
+                            """
+                    )
+                )
             }
             LabeledContent {
                 EmptyView()
             } label: {
                 Label("What doesn't, yet", systemImage: "xmark.circle")
                 Text(
-                    "Raycast's OAuth sign-in, menu-bar commands, and Raycast's own AI, browser and "
-                        + "window-management services.")
+                    String(
+                        localized:
+                            """
+                            Raycast's OAuth sign-in, menu-bar commands, and Raycast's own AI, browser \
+                            and window-management services.
+                            """
+                    )
+                )
             }
         } header: {
             Text("Compatibility")
@@ -117,7 +134,8 @@ struct ExtensionsSettingsView: View {
                     .foregroundStyle(.secondary)
             } else {
                 if core.extensions.installed.count > 3 {
-                    SettingsFilterField(prompt: "Filter extensions…", query: $filter)
+                    SettingsFilterField(
+                        prompt: String(localized: "Filter extensions…"), query: $filter)
                 }
                 if matching.isEmpty {
                     Text("No extension matches \u{201C}\(filter)\u{201D}.")
@@ -147,10 +165,11 @@ struct ExtensionsSettingsView: View {
         } header: {
             Text(
                 core.extensions.installed.isEmpty
-                    ? "Installed" : "Installed (\(core.extensions.installed.count))")
+                    ? String(localized: "Installed")
+                    : String(localized: "Installed (\(core.extensions.installed.count))"))
         } footer: {
             if let error {
-                Label(error, systemImage: "exclamationmark.triangle")
+                Label(error.localized, systemImage: "exclamationmark.triangle")
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
@@ -198,7 +217,8 @@ struct ExtensionsSettingsView: View {
             }
             SettingsRow(
                 title: "Add from folder",
-                subtitle: "A folder holding package.json and the built command files."
+                subtitle: String(
+                    localized: "A folder holding package.json and the built command files.")
             ) {
                 Image(systemName: "folder")
                     .foregroundStyle(.secondary)
@@ -210,7 +230,7 @@ struct ExtensionsSettingsView: View {
         } footer: {
             if let error {
                 // Under the buttons that caused it: it used to sit beneath the list, far above.
-                Label(error, systemImage: "exclamationmark.triangle")
+                Label(error.localized, systemImage: "exclamationmark.triangle")
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
@@ -309,7 +329,7 @@ struct ExtensionsSettingsView: View {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = true
-        panel.prompt = "Add"
+        panel.prompt = String(localized: "Add")
         guard panel.runModal() == .OK else { return }
         Task {
             error = nil
@@ -334,10 +354,14 @@ struct ExtensionsSettingsView: View {
         await findPending()
         let imported = chosen.count - failed.count
         if failed.isEmpty {
-            importSummary = "Imported \(imported) extension\(imported == 1 ? "" : "s")."
+            importSummary =
+                imported == 1
+                ? String(localized: "Imported 1 extension.")
+                : String(localized: "Imported \(imported) extensions.")
         } else {
-            importSummary = "Imported \(imported); \(failed.count) failed."
-            error = "Couldn't import \(failed.joined(separator: ", "))."
+            importSummary = String(
+                localized: "Imported \(imported); \(failed.count) failed.")
+            error = String(localized: "Couldn't import \(failed.joined(separator: ", ")).")
         }
     }
 
@@ -405,7 +429,7 @@ private struct ExtensionDisclosure: View {
 
                 if !installed.manifest.preferences.isEmpty {
                     rule
-                    heading("Preferences")
+                    heading(String(localized: "Preferences"))
                     ForEach(
                         Array(installed.manifest.preferences.enumerated()), id: \.element.name
                     ) { index, schema in
@@ -416,7 +440,9 @@ private struct ExtensionDisclosure: View {
                 }
 
                 rule
-                heading(installed.manifest.commands.count == 1 ? "Command" : "Commands")
+                heading(
+                    installed.manifest.commands.count == 1
+                        ? String(localized: "Command") : String(localized: "Commands"))
                 ForEach(Array(installed.manifest.commands.enumerated()), id: \.element.id) {
                     index, command in
                     if index > 0 { rule }
@@ -515,7 +541,9 @@ private struct CommandRows: View {
     let command: ExtensionCommand
 
     /// A fact about the command, so it sits by the name as a badge rather than a warning colour.
-    private var badge: String? { command.mode.isSupported ? nil : "Menu Bar" }
+    private var badge: String? {
+        command.mode.isSupported ? nil : String(localized: "Menu Bar")
+    }
 
     var body: some View {
         SettingsCardRow(title: command.title, detail: command.description, badge: badge) {
@@ -555,10 +583,10 @@ private struct ExtensionLauncherRow: View {
 
     var body: some View {
         SettingsCardRow(
-            title: "Show in launcher",
+            title: String(localized: "Show in launcher"),
             detail: isVisible
-                ? "Its commands appear in launcher search."
-                : "Hidden from launcher search; shortcuts still work."
+                ? String(localized: "Its commands appear in launcher search.")
+                : String(localized: "Hidden from launcher search; shortcuts still work.")
         ) {
             // A closure, not `set: setVisible`: an actor-isolated method as a setter crashes IRGen.
             Toggle("", isOn: Binding(get: { isVisible }, set: { setVisible($0) }))
@@ -590,9 +618,10 @@ private struct ExtensionIconRow: View {
 
     var body: some View {
         SettingsCardRow(
-            title: "Launcher icon",
+            title: String(localized: "Launcher icon"),
             detail: appearance == nil
-                ? "The icon this extension ships." : "Replaced with a Tinycast icon."
+                ? String(localized: "The icon this extension ships.")
+                : String(localized: "Replaced with a Tinycast icon.")
         ) {
             HStack(spacing: Theme.Spacing.md) {
                 preview
@@ -644,7 +673,8 @@ private struct ExtensionPreferenceRow: View {
     private var detail: String? {
         let description = schema.description ?? ""
         guard schema.required else { return description }
-        return description.isEmpty ? "Required." : description + " Required."
+        return description.isEmpty
+            ? String(localized: "Required.") : description + String(localized: " Required.")
     }
 
     @ViewBuilder
@@ -761,7 +791,7 @@ private struct ExtensionImportSheet: View {
             }
 
             if candidates.count > 6 {
-                SettingsFilterField(prompt: "Filter…", query: $filter)
+                SettingsFilterField(prompt: String(localized: "Filter…"), query: $filter)
             }
 
             ScrollView {
@@ -807,7 +837,11 @@ private struct ExtensionImportSheet: View {
                 Spacer()
                 Button("Cancel", action: onCancel)
                     .keyboardShortcut(.cancelAction)
-                Button("Import \(chosen.isEmpty ? "" : "(\(chosen.count))")") {
+                Button(
+                    chosen.isEmpty
+                        ? String(localized: "Import")
+                        : String(localized: "Import (\(chosen.count))")
+                ) {
                     onImport(
                         candidates.map(\.installed).filter { chosen.contains($0.manifest.name) })
                 }

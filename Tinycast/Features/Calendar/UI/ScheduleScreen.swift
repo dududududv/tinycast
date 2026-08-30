@@ -71,8 +71,12 @@ struct ScheduleScreen: PaletteScreen {
 
     /// Names why the list is empty: no access reads very differently from a free afternoon.
     private var emptyMessage: String {
-        if store.access != .granted { return "Tinycast has no access to your calendar" }
-        if !vm.query.trimmingCharacters(in: .whitespaces).isEmpty { return "No matching meetings" }
-        return "Nothing scheduled today or tomorrow"
+        if store.access != .granted {
+            return String(localized: "Tinycast has no access to your calendar")
+        }
+        if !vm.query.trimmingCharacters(in: .whitespaces).isEmpty {
+            return String(localized: "No matching meetings")
+        }
+        return String(localized: "Nothing scheduled today or tomorrow")
     }
 }

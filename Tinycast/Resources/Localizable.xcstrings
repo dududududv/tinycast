@@ -44,6 +44,16 @@
         }
       }
     },
+    " Required." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " 必填。"
+          }
+        }
+      }
+    },
     " and %lld more" : {
       "localizations" : {
         "zh-Hans" : {
@@ -102,6 +112,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "本笔记中有 %@"
+          }
+        }
+      }
+    },
+    "%@ installs" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 次安装"
           }
         }
       }
@@ -258,6 +278,16 @@
         }
       }
     },
+    "%lld hr" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 小时"
+          }
+        }
+      }
+    },
     "%lld images is all one message can carry." : {
       "localizations" : {
         "zh-Hans" : {
@@ -274,6 +304,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 项"
+          }
+        }
+      }
+    },
+    "%lld min" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 分钟"
           }
         }
       }
@@ -646,6 +686,26 @@
         }
       }
     },
+    "A GitHub repository holding one folder per extension, laid out like raycast/extensions." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一个 GitHub 仓库，每个扩展对应一个文件夹，结构与 raycast/extensions 相同。"
+          }
+        }
+      }
+    },
+    "A folder holding package.json and the built command files." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包含 package.json 和已构建命令文件的文件夹。"
+          }
+        }
+      }
+    },
     "A key is already stored in Keychain" : {
       "localizations" : {
         "zh-Hans" : {
@@ -662,6 +722,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不含斜杠的规则会匹配任意文件或文件夹名，例如 *.tmp 或 node_modules；含斜杠的规则会匹配完整路径，例如 **/[Cc]ache/**。内置规则始终生效。"
+          }
+        }
+      }
+    },
+    "A repository with one folder per extension, laid out like raycast/extensions. These serve source, so installing one builds it here — dependencies first, with the package manager above. Add a registry only if you trust who publishes it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仓库中每个扩展对应一个文件夹，结构与 raycast/extensions 相同。这些注册源提供源码，安装时会先使用上方的包管理器安装依赖，再在本机构建。请仅添加你信任的发布者。"
           }
         }
       }
@@ -1455,6 +1525,16 @@
         }
       }
     },
+    "Blue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "蓝色"
+          }
+        }
+      }
+    },
     "Bottom Half" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1484,6 +1564,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "右下四分之一"
+          }
+        }
+      }
+    },
+    "Brown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "棕色"
+          }
+        }
+      }
+    },
+    "Building…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在构建…"
           }
         }
       }
@@ -1541,7 +1641,6 @@
       }
     },
     "Calendar access is off" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2013,6 +2112,16 @@
         }
       }
     },
+    "Colon-separated, like PATH — checked before Homebrew and the rest. For mise: ~/.local/share/mise/shims. For Nix (Home Manager): /etc/profiles/per-user/<you>/home-path/bin." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用冒号分隔，与 PATH 相同；它们会在 Homebrew 等默认路径之前检查。mise：~/.local/share/mise/shims。Nix (Home Manager)：/etc/profiles/per-user/<you>/home-path/bin。"
+          }
+        }
+      }
+    },
     "Command" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2318,6 +2427,16 @@
         }
       }
     },
+    "Couldn't import %@." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法导入 %@。"
+          }
+        }
+      }
+    },
     "Couldn't open the meeting link" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2467,12 +2586,21 @@
       }
     },
     "Custom search paths" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "自定义搜索路径"
+          }
+        }
+      }
+    },
+    "Cyan" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "青色"
           }
         }
       }
@@ -2778,6 +2906,16 @@
         }
       }
     },
+    "Downloading…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在下载…"
+          }
+        }
+      }
+    },
     "Drag to reposition" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3005,6 +3143,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "启用日历？"
+          }
+        }
+      }
+    },
+    "Enable extensions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用扩展"
           }
         }
       }
@@ -3252,6 +3400,26 @@
         }
       }
     },
+    "Extensions are third-party JavaScript, run on this Mac. A running command holds a JavaScript engine in memory until you leave it — expect Tinycast to use noticeably more RAM while one is open." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扩展是在此 Mac 上运行的第三方 JavaScript。命令运行期间会一直在内存中保持 JavaScript 引擎，因此打开扩展命令时 Tinycast 会占用明显更多内存。"
+          }
+        }
+      }
+    },
+    "Extensions from a repository are source: installing one runs your package manager and the extension's own build script on this Mac." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仓库中的扩展以源码提供；安装时会在此 Mac 上运行包管理器和扩展自带的构建脚本。"
+          }
+        }
+      }
+    },
     "Features" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3273,6 +3441,16 @@
         }
       }
     },
+    "Filter extensions…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选扩展…"
+          }
+        }
+      }
+    },
     "Filter files and folders by name…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3280,6 +3458,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按名称筛选文件和文件夹…"
+          }
+        }
+      }
+    },
+    "Filter…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选…"
           }
         }
       }
@@ -3429,6 +3617,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "食物与饮品"
+          }
+        }
+      }
+    },
+    "For" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "持续"
           }
         }
       }
@@ -3624,6 +3822,26 @@
         }
       }
     },
+    "Gray" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "灰色"
+          }
+        }
+      }
+    },
+    "Green" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "绿色"
+          }
+        }
+      }
+    },
     "Halves" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3631,6 +3849,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "半屏"
+          }
+        }
+      }
+    },
+    "Hidden from launcher search; shortcuts still work." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已从启动器搜索中隐藏；快捷键仍然有效。"
           }
         }
       }
@@ -3828,6 +4056,16 @@
         }
       }
     },
+    "Import (%lld)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入（%lld）"
+          }
+        }
+      }
+    },
     "Import All" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3911,6 +4149,16 @@
         }
       }
     },
+    "Imported %lld extensions." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已导入 %lld 个扩展。"
+          }
+        }
+      }
+    },
     "Imported %lld quicklinks." : {
       "localizations" : {
         "zh-Hans" : {
@@ -3943,6 +4191,32 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已导入 %lld 个文本片段。"
+          }
+        }
+      }
+    },
+    "Imported %lld; %lld failed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Imported %1$lld; %2$lld failed."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已导入 %1$lld 个；%2$lld 个失败。"
+          }
+        }
+      }
+    },
+    "Imported 1 extension." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已导入 1 个扩展。"
           }
         }
       }
@@ -4009,6 +4283,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "包含 Shift（⇧）"
+          }
+        }
+      }
+    },
+    "Indigo" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "靛蓝色"
           }
         }
       }
@@ -4083,6 +4367,36 @@
         }
       }
     },
+    "Installing dependencies with %@…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在使用 %@ 安装依赖…"
+          }
+        }
+      }
+    },
+    "Installing…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在安装…"
+          }
+        }
+      }
+    },
+    "Installs without Node or a package manager." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无需 Node 或包管理器即可安装。"
+          }
+        }
+      }
+    },
     "It goes on the calendar new events go to." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4090,6 +4404,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "日程会添加到默认的新建日程日历。"
+          }
+        }
+      }
+    },
+    "Its commands appear in launcher search." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的命令会出现在启动器搜索中。"
           }
         }
       }
@@ -4174,6 +4498,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "加入下一场会议"
+          }
+        }
+      }
+    },
+    "Join meetings from Tinycast" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从 Tinycast 加入会议"
           }
         }
       }
@@ -4358,7 +4692,6 @@
       }
     },
     "Launcher icon" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4441,6 +4774,26 @@
         }
       }
     },
+    "Light Brown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浅棕色"
+          }
+        }
+      }
+    },
+    "Lime" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "青柠色"
+          }
+        }
+      }
+    },
     "Link" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4473,7 +4826,6 @@
       }
     },
     "List every extension's commands in launcher search." : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4484,7 +4836,6 @@
       }
     },
     "List individual meetings alongside apps and commands." : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4501,6 +4852,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将此快捷链接与应用和命令一同列出。"
+          }
+        }
+      }
+    },
+    "List, detail, form and grid commands, and ones that just run. Preferences, arguments, storage, the clipboard, toasts and HUDs." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支持列表、详情、表单、网格命令以及直接运行的命令；也支持偏好设置、参数、存储、剪贴板、提示和 HUD。"
           }
         }
       }
@@ -4610,6 +4971,16 @@
         }
       }
     },
+    "Maroon" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "酒红色"
+          }
+        }
+      }
+    },
     "Match macOS, or pin Tinycast to Light or Dark." : {
       "localizations" : {
         "zh-Hans" : {
@@ -4675,6 +5046,16 @@
         }
       }
     },
+    "Meeting Link" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议链接"
+          }
+        }
+      }
+    },
     "Meeting link copied" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4692,6 +5073,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "菜单栏"
+          }
+        }
+      }
+    },
+    "Mint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "薄荷色"
           }
         }
       }
@@ -5070,6 +5461,16 @@
         }
       }
     },
+    "No camera on this Mac." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此 Mac 上没有可用摄像头。"
+          }
+        }
+      }
+    },
     "No compatible text models were returned." : {
       "localizations" : {
         "zh-Hans" : {
@@ -5140,6 +5541,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有与“%@”匹配的结果。"
+          }
+        }
+      }
+    },
+    "No matching meetings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有匹配的会议"
           }
         }
       }
@@ -5376,6 +5787,16 @@
         }
       }
     },
+    "Nothing scheduled today or tomorrow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天和明天没有安排"
+          }
+        }
+      }
+    },
     "Nothing to Export" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5429,6 +5850,16 @@
         }
       }
     },
+    "Nothing to join right now" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前没有可加入的会议"
+          }
+        }
+      }
+    },
     "Nothing to show yet." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5436,6 +5867,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂无内容。"
+          }
+        }
+      }
+    },
+    "Now" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "进行中"
           }
         }
       }
@@ -5708,6 +6149,16 @@
         }
       }
     },
+    "Optional" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可选"
+          }
+        }
+      }
+    },
     "Optional label" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5739,8 +6190,17 @@
         }
       }
     },
+    "Orange" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "橙色"
+          }
+        }
+      }
+    },
     "Package manager" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -5845,6 +6305,16 @@
         }
       }
     },
+    "Pink" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粉色"
+          }
+        }
+      }
+    },
     "Pinned to the top" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5896,6 +6366,26 @@
         }
       }
     },
+    "Prebuilt extensions, through the endpoint the store's own site searches. Not an official API, so a GitHub registry is the fallback if it changes." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过商店网站使用的搜索端点获取预构建扩展。这不是官方 API；如果它发生变化，可改用 GitHub 注册源。"
+          }
+        }
+      }
+    },
+    "Preferences" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偏好设置"
+          }
+        }
+      }
+    },
     "Press this shortcut to open Tinycast." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5940,6 +6430,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "服务提供商"
+          }
+        }
+      }
+    },
+    "Purple" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紫色"
           }
         }
       }
@@ -6123,6 +6623,26 @@
         }
       }
     },
+    "Raycast's OAuth sign-in, menu-bar commands, and Raycast's own AI, browser and window-management services." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不支持 Raycast 的 OAuth 登录、菜单栏命令，以及 Raycast 自带的 AI、浏览器和窗口管理服务。"
+          }
+        }
+      }
+    },
+    "Reads today's and tomorrow's events to find join links. Nothing leaves this Mac." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读取今天和明天的日程以查找入会链接；任何数据都不会离开此 Mac。"
+          }
+        }
+      }
+    },
     "Reasonable Size" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6176,6 +6696,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "录制"
+          }
+        }
+      }
+    },
+    "Red" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "红色"
           }
         }
       }
@@ -6312,6 +6842,26 @@
         }
       }
     },
+    "Removes build files left by an interrupted install, and the storage of extensions that are no longer installed. Installed extensions are untouched." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除安装中断后留下的构建文件，以及已卸载扩展的存储数据；不会影响已安装的扩展。"
+          }
+        }
+      }
+    },
+    "Removes the extension and everything it stored — its preferences, its cache and its own files. Its commands leave the launcher." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除此扩展及其存储的所有内容，包括偏好设置、缓存和扩展文件；它的命令也会从启动器中移除。"
+          }
+        }
+      }
+    },
     "Rename %@" : {
       "localizations" : {
         "zh-Hans" : {
@@ -6322,12 +6872,32 @@
         }
       }
     },
+    "Replaced with a Tinycast icon." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已替换为 Tinycast 图标。"
+          }
+        }
+      }
+    },
     "Repository" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "仓库"
+          }
+        }
+      }
+    },
+    "Required." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必填。"
           }
         }
       }
@@ -6552,6 +7122,16 @@
         }
       }
     },
+    "Rose" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "玫瑰色"
+          }
+        }
+      }
+    },
     "Run" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6581,6 +7161,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行自定义命令"
+          }
+        }
+      }
+    },
+    "Run Raycast extensions natively. A running command holds a JavaScript engine in memory until you leave it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原生运行 Raycast 扩展。命令运行期间会在内存中保持一个 JavaScript 引擎，直到你离开该命令。"
           }
         }
       }
@@ -6709,6 +7299,16 @@
         }
       }
     },
+    "Search calendars…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索日历…"
+          }
+        }
+      }
+    },
     "Search chats…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6738,6 +7338,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索扩展"
+          }
+        }
+      }
+    },
+    "Search extensions…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索扩展…"
           }
         }
       }
@@ -7305,6 +7915,16 @@
         }
       }
     },
+    "Slate" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "石板灰"
+          }
+        }
+      }
+    },
     "Sleep" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -7436,6 +8056,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始输入…"
+          }
+        }
+      }
+    },
+    "Starts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始"
           }
         }
       }
@@ -7651,6 +8281,16 @@
         }
       }
     },
+    "Teal" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "蓝绿色"
+          }
+        }
+      }
+    },
     "Template" : {
       "localizations" : {
         "zh-Hans" : {
@@ -7731,6 +8371,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已自动勾选 %lld 个尚未导入的扩展；勾选已有扩展可更新它。"
+          }
+        }
+      }
+    },
+    "The icon this extension ships." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此扩展自带的图标。"
           }
         }
       }
@@ -7883,12 +8533,32 @@
         }
       }
     },
+    "This meeting has no link" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此会议没有入会链接"
+          }
+        }
+      }
+    },
     "This model is already added." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "已添加此模型。"
+          }
+        }
+      }
+    },
+    "This registry serves source. Installing runs your package manager and the extension's build script." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此注册源提供源码；安装时会运行包管理器和扩展的构建脚本。"
           }
         }
       }
@@ -7945,6 +8615,26 @@
         }
       }
     },
+    "Tinycast has no access to the camera." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinycast 没有摄像头访问权限。"
+          }
+        }
+      }
+    },
+    "Tinycast has no access to your calendar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinycast 没有日历访问权限"
+          }
+        }
+      }
+    },
     "Tinycast needs Accessibility access to remap keys." : {
       "localizations" : {
         "zh-Hans" : {
@@ -7965,6 +8655,16 @@
         }
       }
     },
+    "Tinycast reads today's and tomorrow's events to find join links. Nothing leaves this Mac." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tinycast 会读取今天和明天的日程以查找入会链接；任何数据都不会离开此 Mac。"
+          }
+        }
+      }
+    },
     "Tinycast will relearn your preferred results as you use the launcher." : {
       "localizations" : {
         "zh-Hans" : {
@@ -7981,6 +8681,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "提示：请取消相同的 Raycast 快捷键，以免冲突。"
+          }
+        }
+      }
+    },
+    "Today" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天"
           }
         }
       }
@@ -8047,6 +8757,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "切换系统外观"
+          }
+        }
+      }
+    },
+    "Tomorrow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明天"
           }
         }
       }
@@ -8136,8 +8856,17 @@
         }
       }
     },
+    "Turn Calendar on in Settings first" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先在设置中启用日历"
+          }
+        }
+      }
+    },
     "Turn Tinycast on under Privacy & Security ▸ Calendars." : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -8513,6 +9242,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将整个资料库写入 JSON 文件。"
+          }
+        }
+      }
+    },
+    "Yellow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "黄色"
           }
         }
       }

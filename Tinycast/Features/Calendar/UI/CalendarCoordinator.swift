@@ -74,8 +74,10 @@ final class CalendarCoordinator {
             guard
                 await core.confirm(
                     title: "Enable calendar?",
-                    message:
-                        "Tinycast reads today's and tomorrow's events to find join links. Nothing leaves this Mac.",
+                    message: String(
+                        localized:
+                            "Tinycast reads today's and tomorrow's events to find join links. Nothing leaves this Mac."
+                    ),
                     symbol: "calendar", confirmTitle: "Continue", tone: .neutral,
                     confirmRole: .standard)
             else { return }
@@ -192,7 +194,7 @@ final class CalendarCoordinator {
 
     func joinNextMeeting() {
         guard let meeting = nextJoinable() else {
-            report("Nothing to join right now")
+            report(String(localized: "Nothing to join right now"))
             return
         }
         join(meeting)
@@ -200,7 +202,7 @@ final class CalendarCoordinator {
 
     func copyNextMeetingLink() {
         guard let meeting = nextJoinable() else {
-            report("Nothing to join right now")
+            report(String(localized: "Nothing to join right now"))
             return
         }
         copyLink(meeting)
@@ -209,7 +211,7 @@ final class CalendarCoordinator {
     func createEvent() {
         paletteCoordinator.hidePalette(restoreFocus: false)
         guard settings.calendarEnabled, store.access == .granted else {
-            report("Turn Calendar on in Settings first")
+            report(String(localized: "Turn Calendar on in Settings first"))
             return
         }
         NSApp.activate(ignoringOtherApps: true)
@@ -228,7 +230,7 @@ final class CalendarCoordinator {
 
     func openNextMeetingInCalendar() {
         guard let meeting = window.joinable(from: store.events, now: Date()) ?? agenda.first else {
-            report("Nothing scheduled today or tomorrow")
+            report(String(localized: "Nothing scheduled today or tomorrow"))
             return
         }
         openInCalendar(meeting)
@@ -286,7 +288,7 @@ final class CalendarCoordinator {
 
     func copyLink(_ meeting: MeetingEvent) {
         guard let link = meeting.link else {
-            report("This meeting has no link")
+            report(String(localized: "This meeting has no link"))
             return
         }
         paletteCoordinator.hidePalette(restoreFocus: false)

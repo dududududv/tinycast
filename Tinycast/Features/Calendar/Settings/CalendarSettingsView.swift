@@ -10,18 +10,24 @@ struct CalendarSettingsView: View {
         Form {
             FeatureSwitchSection(
                 header: "Calendar",
-                enableTitle: "Join meetings from Tinycast",
-                enableSubtitle:
-                    "Reads today's and tomorrow's events to find join links. Nothing leaves this Mac.",
-                launcherSubtitle: "List individual meetings alongside apps and commands.",
+                enableTitle: String(localized: "Join meetings from Tinycast"),
+                enableSubtitle: String(
+                    localized:
+                        "Reads today's and tomorrow's events to find join links. Nothing leaves this Mac."
+                ),
+                launcherSubtitle: String(
+                    localized: "List individual meetings alongside apps and commands."),
                 isEnabled: enabledBinding,
                 showsInLauncher: $settings.calendarShowInLauncher)
 
             if store.access == .denied {
                 Section {
                     SettingsRow(
-                        title: "Calendar access is off",
-                        subtitle: "Turn Tinycast on under Privacy & Security ▸ Calendars."
+                        title: String(localized: "Calendar access is off"),
+                        subtitle: String(
+                            localized:
+                                "Turn Tinycast on under Privacy & Security ▸ Calendars."
+                        )
                     ) {
                         Button("Open System Settings…") { Permissions.openCalendarSettings() }
                     }
@@ -125,7 +131,8 @@ private struct CalendarCommandsSection: View {
                     Toggle("", isOn: visibilityBinding(entry))
                         .labelsHidden()
                         .toggleStyle(.checkbox)
-                        .accessibilityLabel("Show \(entry.name) in launcher")
+                        .accessibilityLabel(
+                            String(localized: "Show \(entry.name.localized) in launcher"))
                 }
             }
         } header: {
@@ -161,7 +168,7 @@ private struct CalendarPickerSection: View {
 
     var body: some View {
         Section {
-            SettingsFilterField(prompt: "Search calendars…", query: $query)
+            SettingsFilterField(prompt: String(localized: "Search calendars…"), query: $query)
 
             if calendars.isEmpty {
                 Text(emptyMessage)
@@ -202,7 +209,8 @@ private struct CalendarRow: View {
             Toggle("", isOn: binding)
                 .labelsHidden()
                 .toggleStyle(.checkbox)
-                .accessibilityLabel("Include \(calendar.title) in meetings")
+                .accessibilityLabel(
+                    String(localized: "Include \(calendar.title) in meetings"))
         }
     }
 

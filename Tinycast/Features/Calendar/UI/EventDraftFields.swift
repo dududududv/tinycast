@@ -25,13 +25,24 @@ struct EventDraftFields: View {
                     RoundedRectangle(cornerRadius: Theme.Radius.menu, style: .continuous)
                         .fill(Theme.Colors.controlSurface))
             ChipRow(
-                label: "Starts", values: EventDraft.startOffsets,
-                title: EventDraft.label(startOffset:), selection: $state.draft.startOffsetMinutes)
+                label: String(localized: "Starts"), values: EventDraft.startOffsets,
+                title: Self.startTitle, selection: $state.draft.startOffsetMinutes)
             ChipRow(
-                label: "For", values: EventDraft.durations, title: EventDraft.label(duration:),
+                label: String(localized: "For"), values: EventDraft.durations,
+                title: Self.durationTitle,
                 selection: $state.draft.durationMinutes)
         }
         .onAppear { focused = true }
+    }
+
+    private static func startTitle(_ minutes: Int) -> String {
+        minutes == 0 ? String(localized: "Now") : durationTitle(minutes)
+    }
+
+    private static func durationTitle(_ minutes: Int) -> String {
+        minutes < 60
+            ? String(localized: "\(minutes) min")
+            : String(localized: "\(minutes / 60) hr")
     }
 }
 
@@ -44,7 +55,7 @@ private struct ChipRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            Text(label.localized)
+            Text(label)
                 .font(Theme.Typography.rowTrailing)
                 .foregroundStyle(Theme.Colors.textSecondary)
                 .frame(width: Theme.Size.dialogIcon, alignment: .leading)
@@ -70,7 +81,7 @@ private struct Chip: View {
 
     var body: some View {
         Button(action: onTap) {
-            Text(title.localized)
+            Text(title)
                 .font(Theme.Typography.rowTrailing)
                 .foregroundStyle(selected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
                 .padding(.horizontal, Theme.Spacing.lg)

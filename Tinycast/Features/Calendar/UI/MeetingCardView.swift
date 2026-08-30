@@ -62,7 +62,9 @@ struct MeetingCard: View {
     private var subtitle: String {
         let time = MeetingTimeFormat.clock(meeting.start)
         guard let provider = meeting.link?.provider else { return time }
-        return "\(time) · \(provider.title.localized)"
+        let providerTitle =
+            provider == .generic ? String(localized: "Meeting Link") : provider.title
+        return "\(time) · \(providerTitle)"
     }
 }
 

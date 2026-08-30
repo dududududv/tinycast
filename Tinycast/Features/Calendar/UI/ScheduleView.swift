@@ -25,8 +25,8 @@ struct ScheduleList: View {
         var rows: [Row] = []
         var current: String?
         for meeting in results {
-            let title =
-                MeetingDay(for: meeting.start, now: now, calendar: .current)?.title ?? "Later"
+            let title = dayTitle(
+                MeetingDay(for: meeting.start, now: now, calendar: .current))
             if title != current {
                 rows.append(.header(title))
                 current = title
@@ -34,6 +34,14 @@ struct ScheduleList: View {
             rows.append(.meeting(meeting))
         }
         return rows
+    }
+
+    private func dayTitle(_ day: MeetingDay?) -> String {
+        switch day {
+        case .today: return String(localized: "Today")
+        case .tomorrow: return String(localized: "Tomorrow")
+        case nil: return String(localized: "Later")
+        }
     }
 
     private var firstRowSelected: Bool {
@@ -115,6 +123,7 @@ private struct MeetingRow: View {
 
     /// A meeting under way says so; everything else reads as the clock time it starts.
     private var trailing: String {
-        meeting.isInProgress(now: now) ? "Now" : MeetingTimeFormat.clock(meeting.start)
+        meeting.isInProgress(now: now)
+            ? String(localized: "Now") : MeetingTimeFormat.clock(meeting.start)
     }
 }

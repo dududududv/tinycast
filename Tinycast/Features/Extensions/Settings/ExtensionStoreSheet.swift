@@ -42,7 +42,8 @@ struct ExtensionStoreSheet: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             header
             // The same borderless field the panes use, rather than a bordered capsule of its own.
-            SettingsFilterField(prompt: "Search extensions…", query: $query)
+            SettingsFilterField(
+                prompt: String(localized: "Search extensions…"), query: $query)
             content
             // The list scrolls right up to the footer without it, cutting the last row mid-sentence.
             Divider()
@@ -168,7 +169,7 @@ struct ExtensionStoreSheet: View {
 
     private func state(for listing: ExtensionListing) -> StoreRow.State {
         if installed.contains(listing.name) { return .installed }
-        if let progress = installing[listing.id] { return .installing(progress.message) }
+        if let progress = installing[listing.id] { return .installing(progress) }
         if let failure = failures[listing.id] { return .failed(failure) }
         if core.extensions.installed.contains(where: { $0.manifest.name == listing.name }) {
             return .alreadyInstalled
@@ -246,7 +247,7 @@ struct ExtensionStoreSheet: View {
 private struct StoreRow: View {
     enum State: Equatable {
         case idle
-        case installing(String)
+        case installing(ExtensionInstaller.Progress)
         case installed
         case alreadyInstalled
         case failed(String)
@@ -275,8 +276,14 @@ private struct StoreRow: View {
                             .background(Theme.Colors.controlSurface, in: .capsule)
                             .foregroundStyle(.secondary)
                             .help(
-                                "This registry serves source. Installing runs your package manager "
-                                    + "and the extension's build script.")
+                                String(
+                                    localized:
+                                        """
+                                        This registry serves source. Installing runs your package \
+                                        manager and the extension's build script.
+                                        """
+                                )
+                            )
                     }
                 }
                 if !listing.summary.isEmpty {
@@ -287,7 +294,7 @@ private struct StoreRow: View {
                         .truncationMode(.tail)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Text(listing.subtitle)
+                Text(subtitle)
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                 if case .failed(let message) = state {
@@ -309,10 +316,10 @@ private struct StoreRow: View {
         switch state {
         case .idle:
             Button("Install", action: onInstall)
-        case .installing(let message):
+        case .installing(let progress):
             HStack(spacing: Theme.Spacing.sm) {
                 ProgressView().controlSize(.small)
-                Text(message.localized).font(.caption).foregroundStyle(.secondary)
+                Text(progress.localizedMessage).font(.caption).foregroundStyle(.secondary)
             }
             .fixedSize()
         case .installed:
@@ -325,6 +332,35 @@ private struct StoreRow: View {
                 .help("Already installed. Reinstalling replaces it with the registry's copy.")
         case .failed:
             Button("Retry", action: onInstall)
+        }
+    }
+
+    private var subtitle: String {
+        var parts: [String] = []
+        if !listing.author.isEmpty { parts.append(listing.author) }
+        parts.append(
+            listing.commandCount == 1
+                ? String(localized: "1 command")
+                : String(localized: "\(listing.commandCount) commands"))
+        if let downloadCount = listing.downloadCount, downloadCount > 0 {
+            let count = ExtensionListing.abbreviate(downloadCount)
+            parts.append(String(localized: "\(count) installs"))
+        }
+        return parts.joined(separator: " · ")
+    }
+}
+
+private extension ExtensionInstaller.Progress {
+    var localizedMessage: String {
+        switch self {
+        case .downloading:
+            return String(localized: "Downloading…")
+        case .installingDependencies(let manager):
+            return String(localized: "Installing dependencies with \(manager)…")
+        case .building:
+            return String(localized: "Building…")
+        case .installing:
+            return String(localized: "Installing…")
         }
     }
 }
