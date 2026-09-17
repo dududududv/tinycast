@@ -4,6 +4,15 @@ import Foundation
 @MainActor
 @Observable
 final class PaletteState {
+    struct Snapshot {
+        let mode: PaletteMode
+        let query: String
+        let selection: Int
+        let clipboardFilter: ClipboardFilter
+        let forceExpanded: Bool
+        let commandArguments: [String: String]
+    }
+
     var mode: PaletteMode = .launcher
     var query: String = ""
     var selection: Int = 0
@@ -59,6 +68,30 @@ final class PaletteState {
         menuOpen = false
         focusToken = UUID()
         resetToken = UUID()
+    }
+
+    func snapshot() -> Snapshot {
+        Snapshot(
+            mode: mode,
+            query: query,
+            selection: selection,
+            clipboardFilter: clipboardFilter,
+            forceExpanded: forceExpanded,
+            commandArguments: commandArguments)
+    }
+
+    func restore(_ snapshot: Snapshot) {
+        mode = snapshot.mode
+        query = snapshot.query
+        selection = snapshot.selection
+        clipboardFilter = snapshot.clipboardFilter
+        forceExpanded = snapshot.forceExpanded
+        commandArguments = snapshot.commandArguments
+        isComposing = false
+        commandHeld = false
+        dropHoverHighlight()
+        menuOpen = false
+        focusToken = UUID()
     }
 
     /// U+0001 can't appear in an entry id or an argument name, so the halves stay unambiguous.

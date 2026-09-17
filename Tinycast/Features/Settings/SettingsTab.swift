@@ -1,7 +1,7 @@
 enum SettingsTab: CaseIterable, Identifiable {
-    case general, applications, systemSettings, systemActions, commands, quicklinks, ai, fileSearch,
-        notes, snippets, windowManagement, clipboard, emoji, calendar, extensions, permissions,
-        backup, about
+    case general, applications, systemSettings, systemActions, commands, quicklinks, ai, ossUpload,
+        fileSearch, notes, snippets, windowManagement, clipboard, emoji, calendar, extensions,
+        permissions, backup, about
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
 
@@ -14,6 +14,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .commands: return "Commands"
         case .quicklinks: return "Quicklinks"
         case .ai: return "AI"
+        case .ossUpload: return "OSS Upload"
         case .fileSearch: return "File Search"
         case .notes: return "Notes"
         case .snippets: return "Snippets"
@@ -37,6 +38,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .commands: return "terminal"
         case .quicklinks: return "link"
         case .ai: return "sparkles"
+        case .ossUpload: return "icloud.and.arrow.up"
         case .fileSearch: return "doc.text.magnifyingglass"
         case .notes: return "text.page"
         case .snippets: return "curlybraces"
@@ -74,8 +76,8 @@ enum SettingsSection: CaseIterable, Identifiable {
             return [.applications, .systemSettings, .systemActions, .commands, .quicklinks]
         case .features:
             return [
-                .ai, .fileSearch, .notes, .snippets, .windowManagement, .clipboard, .emoji, .calendar,
-                .extensions
+                .ai, .ossUpload, .fileSearch, .notes, .snippets, .windowManagement, .clipboard,
+                .emoji, .calendar, .extensions
             ]
         case .advanced: return [.backup, .about]
         }

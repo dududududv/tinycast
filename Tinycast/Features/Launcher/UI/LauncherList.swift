@@ -16,23 +16,18 @@ struct LauncherList: View {
     let onActions: (AppEntry) -> Void
     @Environment(RunningAppsMonitor.self) private var runningApps
 
-    /// The calculator answers a typed query and the join card an empty one, so they cannot both
-    /// lead — which is what keeps the flat selection index a single-row offset.
     enum LeadCard: Equatable {
         case calc(CalcResult)
-        case meeting(MeetingEvent, now: Date)
 
         var sectionTitle: String {
             switch self {
             case .calc: return "Calculator"
-            case .meeting: return "Meeting"
             }
         }
 
         var rowID: String {
             switch self {
             case .calc: return "calc-card"
-            case .meeting: return "meeting-card"
             }
         }
     }
@@ -82,7 +77,7 @@ struct LauncherList: View {
         }
         // Publication order, so rows match the flat index.
         let kinds: [AppEntry.Kind] = [
-            .meeting, .application, .systemSettings, .extensionCommand, .quicklink, .snippet,
+            .application, .systemSettings, .extensionCommand, .quicklink, .snippet,
             .systemAction, .windowCommand, .customCommand, .command
         ]
         for kind in kinds {
@@ -159,8 +154,6 @@ private struct LeadCardView: View {
         switch card {
         case .calc(let result):
             CalculatorCard(result: result, selected: selected)
-        case .meeting(let meeting, let now):
-            MeetingCard(meeting: meeting, now: now, selected: selected)
         }
     }
 }

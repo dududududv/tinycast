@@ -3,7 +3,6 @@ import AppKit
 @MainActor
 final class JSONLineNumberRulerView: NSRulerView {
     private weak var editor: JSONEditorTextView?
-    private var lineCount = 1
 
     init(scrollView: NSScrollView, editor: JSONEditorTextView) {
         self.editor = editor
@@ -23,61 +22,54 @@ final class JSONLineNumberRulerView: NSRulerView {
     }
 
     func updateLineCount() {
-        guard let editor else { return }
-        lineCount = editor.string.reduce(into: 1) { count, character in
-            if character == "\n" { count += 1 }
-        }
+        if let editor { editor.lineStarts = JSONEditorEngine.lineStarts(in: editor.string) }
         needsDisplay = true
     }
 
     override func drawHashMarksAndLabels(in rect: NSRect) {
-        guard let editor, let scrollView else { return }
+        guard let editor, let window else { return }
         let font = JSONSourceEditor.editorFont
-        let lineHeight = editor.layoutManager?.defaultLineHeight(for: font) ?? font.pointSize * 1.2
-        let inset = editor.textContainerInset.height
-        let visibleTop = scrollView.contentView.bounds.minY
-        let first = max(Int(floor((visibleTop - inset) / lineHeight)), 0)
-        let visibleLines = Int(ceil(bounds.height / lineHeight)) + 2
-        let last = min(first + visibleLines, lineCount - 1)
-        guard first <= last else { return }
+        let length = editor.textStorage?.length ?? 0
+        let inset = editor.textContainerInset
+        let visible = editor.visibleRect
+        let probe = NSPoint(
+            x: max(visible.minX, inset.width),
+            y: max(visible.minY, inset.height) + font.pointSize / 2)
+        let visibleIndex = visible.minY <= inset.height
+            ? 0 : min(editor.characterIndexForInsertion(at: probe), length)
+        let firstLine = JSONEditorEngine.lineIndex(at: visibleIndex, starts: editor.lineStarts)
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: NSColor.tertiaryLabelColor
         ]
-        for line in first...last {
-            let label = "\(line + 1)" as NSString
+        for index in firstLine..<min(firstLine + 150, editor.lineStarts.count) {
+            let offset = editor.lineStarts[index]
+            guard offset <= length else { break }
+            let screenRect = editor.firstRect(
+                forCharacterRange: NSRange(location: offset, length: 0), actualRange: nil)
+            let localRect = convert(window.convertFromScreen(screenRect), from: nil)
+            if localRect.minY > bounds.maxY { break }
+            let label = "\(index + 1)" as NSString
             let size = label.size(withAttributes: attributes)
-            let y = inset + CGFloat(line) * lineHeight - visibleTop
-                + (lineHeight - size.height) / 2
             label.draw(
-                at: NSPoint(x: ruleThickness - size.width - Theme.Spacing.md, y: y),
+                at: NSPoint(x: ruleThickness - size.width - Theme.Spacing.md, y: localRect.minY),
                 withAttributes: attributes)
         }
     }
 
     override func mouseDown(with event: NSEvent) {
-        guard let editor, let scrollView else { return }
-        let point = convert(event.locationInWindow, from: nil)
-        let font = JSONSourceEditor.editorFont
-        let lineHeight = editor.layoutManager?.defaultLineHeight(for: font) ?? font.pointSize * 1.2
-        let contentY = scrollView.contentView.bounds.minY + point.y - editor.textContainerInset.height
-        let line = min(max(Int(floor(contentY / lineHeight)), 0), lineCount - 1)
-        let range = range(ofLine: line, in: editor.string as NSString)
+        guard let editor else { return }
+        let clickedPoint = editor.convert(event.locationInWindow, from: nil)
+        let point = NSPoint(
+            x: editor.textContainerInset.width,
+            y: max(clickedPoint.y, editor.textContainerInset.height))
+        let source = editor.string as NSString
+        let offset = min(editor.characterIndexForInsertion(at: point), source.length)
+        let range = source.lineRange(for: NSRange(location: offset, length: 0))
         editor.setSelectedRange(range)
         editor.scrollRangeToVisible(range)
         editor.window?.makeFirstResponder(editor)
     }
 
-    private func range(ofLine requestedLine: Int, in source: NSString) -> NSRange {
-        var range = NSRange(location: 0, length: 0)
-        var line = 0
-        while line <= requestedLine, range.location < source.length {
-            range = source.lineRange(for: NSRange(location: range.location, length: 0))
-            if line == requestedLine { return range }
-            range.location = NSMaxRange(range)
-            line += 1
-        }
-        return NSRange(location: source.length, length: 0)
-    }
 }

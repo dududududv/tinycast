@@ -62,20 +62,6 @@ final class DialogController: NSObject, NSWindowDelegate {
         return Float32(volume.level)
     }
 
-    func createEvent() async -> EventDraft? {
-        let state = EventDraftState()
-        let request = DialogRequest(
-            title: "New Event", message: "It goes on the calendar new events go to.",
-            symbol: "calendar.badge.plus", tone: .neutral,
-            actions: [
-                DialogAction(title: "Create"),
-                DialogAction(title: "Cancel", role: .cancel)
-            ],
-            defaultIndex: 0, cancelIndex: 1, accessory: .eventDraft(state))
-        guard await present(request) == 0, state.draft.isValid else { return nil }
-        return state.draft
-    }
-
     private func present(_ request: DialogRequest) async -> Int {
         // Keyed on the continuation, so a panel still fading can't swallow the next.
         guard continuation == nil else { return request.cancelIndex }
@@ -84,10 +70,7 @@ final class DialogController: NSObject, NSWindowDelegate {
             let content = hostingView(
                 DialogView(
                     request: request,
-                    onChoose: { [weak self] index in
-                        guard Self.accepts(index, for: request) else { return }
-                        self?.finish(index)
-                    }),
+                    onChoose: { [weak self] index in self?.finish(index) }),
                 width: Theme.Size.dialogWidth, minHeight: 0)
             let panel = DialogPanel(content: content)
             panel.handlesArrowKeys = request.accessory?.claimsArrowKeys ?? false
@@ -98,7 +81,6 @@ final class DialogController: NSObject, NSWindowDelegate {
                 case .cancel:
                     finish(request.cancelIndex)
                 case .confirm:
-                    guard Self.accepts(request.defaultIndex, for: request) else { return }
                     finish(request.defaultIndex)
                 case .increment, .decrement:
                     // Keying the slider lands on the same values Volume Up/Down produce.
@@ -114,15 +96,6 @@ final class DialogController: NSObject, NSWindowDelegate {
                 panel.orderFrontRegardless()
             }
         }
-    }
-
-    /// An accessory can refuse its own dialog's primary action; the dialog then simply stays up,
-    /// which is what a greyed-out button would say if `DialogAction` could carry one.
-    private static func accepts(_ index: Int, for request: DialogRequest) -> Bool {
-        guard index == request.defaultIndex, case .eventDraft(let state) = request.accessory else {
-            return true
-        }
-        return state.draft.isValid
     }
 
     /// Resumes before the fade finishes, so a confirmation isn't held up by animation.

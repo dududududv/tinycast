@@ -12,12 +12,11 @@ verifying a change is [testing.md](testing.md).
 
 ## First-time setup
 
-Create the `Tinycast Self-Signed` code-signing identity once — builds sign with it, which is what keeps
-macOS from forgetting the Accessibility grant on every rebuild. Follow **[signing.md](signing.md) §1**,
-a few `openssl`/`security` commands.
-
-That is the whole required setup. Editor configuration is personal and the repo does not prescribe it;
-the section below is a note for anyone who wants it, not a step.
+There is no required signing setup. Development builds use Xcode's **Sign to Run Locally** identity.
+To use an Apple Development certificate instead, copy `Config/Signing.local.xcconfig.example` to
+`Config/Signing.local.xcconfig` and fill in the team ID. The local file is ignored by Git and survives
+`xcodegen generate`; see [signing.md](signing.md). Editor configuration is also personal and the repo
+does not prescribe it.
 
 ## Build & run
 
@@ -51,8 +50,8 @@ neither read nor clobber an installed app's state, and both run side by side.
 Consequences worth knowing:
 
 - The dev build asks for Accessibility on its own the first time, and starts with **no** hotkeys bound
-  and onboarding unseen. Grant and bind once; it persists across rebuilds, because the fixed build path
-  and the `Tinycast Self-Signed` identity keep the TCC grant alive.
+  and onboarding unseen. A stable personal certificate normally keeps the grant across rebuilds;
+  **Sign to Run Locally** may require granting it again when the executable changes.
 - Don't bind the same global hotkey in both — whichever registered first wins.
 - The Hyper Key's Caps Lock remap is `hidutil` state, which is **system-wide, not per-bundle**: quitting
   one build clears the remap for the other, which then needs a rebind or a relaunch to restore it.

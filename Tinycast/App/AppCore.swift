@@ -30,7 +30,6 @@ final class AppCore {
     let calcHistory = CalculatorHistoryStore()
     let currencyRates = CurrencyRateStore()
     let calendarStore = CalendarStore()
-    let meetingClock = MeetingClock()
     let updateChecker = UpdateCheckStore()
     let supportReminders: SupportReminderStore
     let emojiIndex = EmojiIndex()
@@ -47,6 +46,8 @@ final class AppCore {
     let aiChat: AIChatState
     let aiSettings = AISettingsStore()
     let chatGPTSubscription = ChatGPTSubscriptionManager()
+    let ossSettings = OSSSettingsStore()
+    let ossUploadHistory = OSSUploadHistoryStore()
 
     /// Set when a quicklink editor should open with Settings; the pane consumes it.
     var pendingQuicklinkEdit: QuicklinkEditRequest?
@@ -118,8 +119,7 @@ final class AppCore {
     @ObservationIgnored private(set) lazy var calculatorCoordinator = CalculatorCoordinator(
         calcHistory: calcHistory, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var calendarCoordinator = CalendarCoordinator(
-        store: calendarStore, clock: meetingClock, appIndex: appIndex, settings: settings,
-        paletteCoordinator: paletteCoordinator, core: self)
+        store: calendarStore, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var fileSearchCoordinator = FileSearchCoordinator(
         settings: settings, appIndex: appIndex, session: fileSearch, palette: palette,
         paletteCoordinator: paletteCoordinator, core: self)
@@ -131,6 +131,8 @@ final class AppCore {
         chat: aiChat, settings: settings, appIndex: appIndex, palette: palette,
         paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
         core: self)
+    @ObservationIgnored private(set) lazy var ossUploadCoordinator = OSSUploadCoordinator(
+        settings: ossSettings, history: ossUploadHistory, core: self)
 
     @ObservationIgnored private lazy var windowController = PaletteWindowController(core: self)
     @ObservationIgnored private lazy var messageHUD = MessageHUDController(settings: settings)
@@ -197,7 +199,7 @@ final class AppCore {
             quicklinks.load()
             quicklinkCoordinator.applyQuicklinksPresence()
             updateCoordinator.applyEnabled()
-            calendarCoordinator.applyEnabled()
+            calendarStore.start()
             Task { await appIndex.refresh() }
             Task { await emojiIndex.load() }
             currencyRates.start()
@@ -220,11 +222,7 @@ final class AppCore {
             hotKeys.onSearchNotes = { [weak self] in self?.notesCoordinator.searchNotes() }
             hotKeys.onSearchFiles = { [weak self] in self?.fileSearchCoordinator.show() }
             hotKeys.onShowAIChat = { [weak self] in self?.aiChatCoordinator.showChat() }
-            hotKeys.onJoinNextMeeting = { [weak self] in
-                self?.calendarCoordinator.joinNextMeeting()
-            }
-            hotKeys.onShowSchedule = { [weak self] in self?.calendarCoordinator.showSchedule() }
-            hotKeys.onCreateEvent = { [weak self] in self?.calendarCoordinator.createEvent() }
+            hotKeys.onShowCalendar = { [weak self] in self?.calendarCoordinator.showCalendar() }
             hotKeys.onRunCustomCommand = { [weak self] id in
                 self?.customCommandCoordinator.runCustomCommand(id: id)
             }
@@ -287,7 +285,7 @@ final class AppCore {
         if onboardingCoordinator.focusExisting() { return }
         if updateCoordinator.focusExisting() { return }
         if supportCoordinator.focusExisting() { return }
-        paletteCoordinator.showPalette(mode: .launcher, restoreAnyMode: true)
+        paletteCoordinator.summonPalette()
     }
 
     func handleOpenURL(_ url: URL) {
@@ -316,8 +314,7 @@ final class AppCore {
         case .extensionCommand(let entryID):
             return appIndex.apps.first { $0.kind == .extensionCommand && $0.id == entryID }?.name
         case .togglePalette, .toggleClipboard, .toggleEmoji, .searchFiles, .systemAction,
-            .showNotes, .createNote, .searchNotes, .windowCommand, .joinNextMeeting, .mySchedule,
-            .createEvent, .aiChat:
+            .showNotes, .createNote, .searchNotes, .windowCommand, .calendar, .aiChat:
             return nil
         }
     }
@@ -363,16 +360,6 @@ final class AppCore {
         track({ _ = $0.fileSearchEnabled }, reproject: { $0.fileSearchCoordinator.applyEnabled() })
         track({ _ = $0.notesEnabled }, reproject: { $0.notesCoordinator.applyEnabled() })
         track({ _ = $0.aiEnabled }, reproject: { $0.aiChatCoordinator.applyEnabled() })
-        track(
-            {
-                _ = $0.calendarEnabled
-                _ = $0.calendarShowInLauncher
-            }, reproject: { $0.calendarCoordinator.applyEnabled() })
-        track(
-            {
-                _ = $0.autoJoinMeetings
-                _ = $0.menuBarEvents
-            }, reproject: { $0.calendarCoordinator.applyClock() })
         track(
             {
                 _ = $0.fileSearchScopes
@@ -485,8 +472,4 @@ final class AppCore {
         await dialogs.pickVolume(current: current)
     }
 
-    /// The new-event prompt, for the same reason.
-    func createEvent() async -> EventDraft? {
-        await dialogs.createEvent()
-    }
 }

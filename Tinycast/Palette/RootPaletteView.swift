@@ -14,13 +14,13 @@ struct RootPaletteView: View {
     @Environment(FrequentEmojiStore.self) private var frequentEmoji
     @Environment(FileSearchSession.self) private var fileSearch
     @Environment(CalendarStore.self) private var calendarStore
-    /// Observed so the join card's countdown redraws on the minute boundary.
-    @Environment(MeetingClock.self) private var meetingClock
+    @Environment(OSSUploadHistoryStore.self) private var ossUploadHistory
     @Environment(UninstallSession.self) private var uninstall
     @Environment(QuicklinkStore.self) private var quicklinks
     @Environment(QuicklinkArgumentSession.self) private var quicklinkArguments
     @Environment(ExtensionManager.self) private var extensions
     @Environment(AppSettings.self) private var settings
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var searchFocused: Bool
     /// Kept apart from the search field's own focus. See docs/features/palette.md.
     @FocusState private var argumentFocused: String?
@@ -32,6 +32,13 @@ struct RootPaletteView: View {
     @State private var menuSelection = 0
     /// The pending scroll request; modes are exclusive, so one piece of state serves all.
     @State private var scroll = ScrollIntent(kind: .top)
+    @State private var panelHeight = Theme.Size.compactHeight
+
+    private var footerHeight: CGFloat {
+        PalettePlacement.footerHeight(
+            panelHeight: panelHeight, compactHeight: Theme.Size.compactHeight,
+            fullHeight: Theme.Size.bottomBarHeight)
+    }
 
     /// Compact vs. full; the source of truth is on `AppCore`, so the two can't disagree.
     private var isCollapsed: Bool { core.paletteCoordinator.paletteIsCollapsed }
@@ -43,7 +50,6 @@ struct RootPaletteView: View {
             return LauncherScreen(
                 appIndex: appIndex, favorites: favorites, visibility: visibility,
                 currencyRates: currencyRates, core: core, vm: vm, running: selectionIsRunning,
-                meeting: core.calendarCoordinator.cardedMeeting, now: meetingClock.now,
                 openActions: openActions,
                 scrollToFollow: { scroll = ScrollIntent(kind: .follow) })
         case .uninstall:
@@ -66,10 +72,12 @@ struct RootPaletteView: View {
         case .jsonEditor:
             return JSONEditorScreen(
                 state: core.jsonEditorCoordinator.state, editor: core.jsonEditorCoordinator)
-        case .schedule:
-            return ScheduleScreen(
-                store: calendarStore, clock: meetingClock, core: core, vm: vm,
+        case .ossUpload:
+            return OSSUploadScreen(
+                history: ossUploadHistory, coordinator: core.ossUploadCoordinator, vm: vm,
                 openActions: openActions)
+        case .calendar:
+            return CalendarScreen(store: calendarStore, core: core, vm: vm)
         case .clipboard:
             return ClipboardScreen(
                 store: store, core: core, vm: vm, openActions: openActions,
@@ -142,7 +150,7 @@ struct RootPaletteView: View {
             })
     }
 
-    /// The bottom-left app menu content (About / Support / Settings).
+    /// The launcher's bottom-left app menu content.
     private var appMenuContent: PopoverMenuContent {
         PopoverMenuContent(items: [
             PopoverMenuItem(title: "About Tinycast", systemImage: "info.circle") {
@@ -150,9 +158,6 @@ struct RootPaletteView: View {
             },
             PopoverMenuItem(title: "Support Tinycast", systemImage: "heart") {
                 core.supportCoordinator.showSupport()
-            },
-            PopoverMenuItem(title: "Settings", systemImage: "gearshape", shortcut: "⌘,") {
-                core.settingsCoordinator.showSettings()
             }
         ])
     }
@@ -198,11 +203,25 @@ struct RootPaletteView: View {
                 screen.body(selection: sel, scroll: scroll)
             }
         }
-        .safeAreaInset(edge: .top, spacing: 0) { header }
+        .frame(minHeight: 0, maxHeight: .infinity)
+        .keyframeAnimator(initialValue: CGFloat.zero, trigger: vm.mode) { [reduceMotion] content, offset in
+            content.offset(y: reduceMotion ? 0 : offset)
+        } keyframes: { _ in
+            MoveKeyframe(Theme.Spacing.sm)
+            CubicKeyframe(CGFloat.zero, duration: Theme.Duration.enter)
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            header(pillLabel: screen.primaryActionTitle(at: sel), showActionGroup: showActionGroup)
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if !isCollapsed {
+            if !isCollapsed, vm.mode == .launcher {
                 bottomBar(
-                    pillLabel: screen.primaryActionTitle, showActionGroup: showActionGroup)
+                    pillLabel: screen.primaryActionTitle(at: sel),
+                    showActionGroup: showActionGroup)
+                    .frame(height: footerHeight, alignment: .bottom)
+                    .clipped()
+                    .allowsHitTesting(footerHeight >= Theme.Size.bottomBarHeight)
+                    .accessibilityHidden(footerHeight < Theme.Size.bottomBarHeight)
             }
         }
         // The panel has no title bar, so this thin top margin is the only place left to grab it.
@@ -223,11 +242,13 @@ struct RootPaletteView: View {
                     .transition(Self.menuTransition(.bottomLeading))
             }
         }
-        .overlay(alignment: .bottomTrailing) {
+        .overlay(alignment: vm.mode == .launcher ? .bottomTrailing : .topTrailing) {
             if openMenu == .actions, let content = menuContent {
                 content.view()
-                    .padding(Self.menuInset)
-                    .transition(Self.menuTransition(.bottomTrailing))
+                    .padding(.horizontal, vm.mode == .launcher ? Self.menuInset : Theme.Spacing.panelInset)
+                    .padding(.bottom, vm.mode == .launcher ? Self.menuInset : 0)
+                    .padding(.top, vm.mode == .launcher ? 0 : Theme.Size.headerPadding + Theme.Size.headerHeight)
+                    .transition(Self.menuTransition(vm.mode == .launcher ? .bottomTrailing : .topTrailing))
             }
         }
         // Header menus hang from their buttons rather than a panel corner.
@@ -236,12 +257,13 @@ struct RootPaletteView: View {
                 content.view()
                     .padding(.top, Theme.Size.headerPadding + Theme.Size.headerHeight)
                     // Right edges flush with the button's, which sits inside the same trailing gutter.
-                    .padding(.trailing, Theme.Spacing.md * 2)
+                    .padding(.trailing, Theme.Spacing.panelInset)
                     .transition(Self.menuTransition(.topTrailing))
             }
         }
         // The window's frame is the size source, so the glass and clip stay matched.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelHeight = $0 }
         .background(Theme.Colors.panelScrim)
         .background(VisualEffectView())
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
@@ -270,6 +292,7 @@ struct RootPaletteView: View {
             scroll = ScrollIntent(kind: .top)
         }
         .onChange(of: vm.mode) {
+            core.paletteCoordinator.syncPaletteSize()
             vm.selection = 0
             vm.clipboardFilter = .all
             openMenu = nil
@@ -419,6 +442,10 @@ struct RootPaletteView: View {
                 history.delete(at: selection)
                 return .handled
             }
+            if let upload = screen as? OSSUploadScreen {
+                upload.delete(at: selection)
+                return .handled
+            }
             return .ignored
         }
         // ⌃X / ⌃⇧X mirror the delete rows — both cases, Shift uppercasing — and close an open menu.
@@ -434,6 +461,8 @@ struct RootPaletteView: View {
                 if all { history.deleteAll() } else { history.delete(at: selection) }
             case let history as ChatHistoryScreen:
                 if all { history.deleteAll() } else { history.delete(at: selection) }
+            case let upload as OSSUploadScreen:
+                if all { upload.deleteAll() } else { upload.delete(at: selection) }
             default:
                 return .ignored
             }
@@ -482,10 +511,10 @@ struct RootPaletteView: View {
     private func beginDrag() { core.paletteCoordinator.beginPaletteDrag() }
     private func endDrag() { core.paletteCoordinator.endPaletteDrag() }
 
-    private var header: some View {
+    private func header(pillLabel: String, showActionGroup: Bool) -> some View {
         HStack(alignment: .center, spacing: 0) {
             // Matches the list rows and section headers' own indent below.
-            headerGutter(width: Theme.Spacing.md * 2)
+            headerGutter(width: Theme.Spacing.panelInset)
             // Sub-screens of the root search, so their header icon is a back chevron.
             if vm.mode != .launcher {
                 Button(action: navigateBack) {
@@ -547,7 +576,20 @@ struct RootPaletteView: View {
                     )
                 }
             }
-            headerGutter(width: Theme.Spacing.md * 2)
+            if vm.mode == .launcher {
+                headerGutter(width: Theme.Spacing.md)
+                BarButton(chrome: .rounded, action: { core.settingsCoordinator.showSettings() }) {
+                    SymbolImage(name: "gearshape", size: Theme.Size.noteGlyph)
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                }
+                .help("Settings".localized)
+                .accessibilityLabel(Text("Settings".localized))
+            } else if showActionGroup {
+                headerGutter(width: Theme.Spacing.md)
+                actionGroup(pillLabel: pillLabel)
+                    .frame(maxWidth: Theme.Size.menuWidth, alignment: .trailing)
+            }
+            headerGutter(width: Theme.Spacing.panelInset)
         }
         // Identical metrics in both states, so typing can't move the search bar.
         .frame(height: Theme.Size.headerHeight)
@@ -691,7 +733,7 @@ struct RootPaletteView: View {
         }
     }
 
-    /// The footer control group: primary action and the Actions toggle sharing one glass capsule.
+    /// Primary action and the Actions toggle share one glass capsule.
     private func actionGroup(pillLabel: String) -> some View {
         HStack(spacing: 2) {
             BarButton(action: activateSelection) {
@@ -699,6 +741,7 @@ struct RootPaletteView: View {
                     Text(pillLabel.localized)
                         .font(Theme.Typography.bar)
                         .foregroundStyle(pillTint)
+                        .lineLimit(1)
                     KeyCapChip(text: "↵", style: .outline)
                 }
             }

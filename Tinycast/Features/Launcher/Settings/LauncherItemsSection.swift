@@ -21,7 +21,7 @@ struct LauncherItemsSection: View {
     var body: some View {
         Section {
             Toggle(isOn: enabledBinding) {
-                Text("Enable \(header)")
+                Text("Enable \(header.localized)")
                 Text("Off hides them all and stops their shortcuts. Uncheck one below to hide just that one.")
             }
         } header: {
@@ -37,8 +37,8 @@ struct LauncherItemsSection: View {
                         ? String(localized: "Nothing here yet.")
                         : String(localized: "No matches for “\(query)”.")
                 )
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 // One row holding a lazy stack: a `Form` realizes every row it is handed.
                 LazyVStack(spacing: 0) {

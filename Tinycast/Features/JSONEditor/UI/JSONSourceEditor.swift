@@ -3,6 +3,7 @@ import SwiftUI
 
 struct JSONSourceEditor: NSViewRepresentable {
     let input: JSONEditorInput
+    let wrapsLines: Bool
     let onSourceChange: (String) -> Void
     let onCursorChange: (Int, Int) -> Void
     let onReady: (JSONEditorTextView) -> Void
@@ -17,12 +18,14 @@ struct JSONSourceEditor: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
+        scrollView.clipsToBounds = true
         scrollView.drawsBackground = false
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
         scrollView.scrollerStyle = .overlay
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
+        scrollView.findBarPosition = .aboveContent
         scrollView.automaticallyAdjustsContentInsets = false
 
         let textView = JSONEditorTextView(usingTextLayoutManager: true)
@@ -31,6 +34,7 @@ struct JSONSourceEditor: NSViewRepresentable {
         textView.editorUndoManager = context.coordinator.editorUndoManager
         textView.onEscape = onEscape
         scrollView.documentView = textView
+        Self.setWrapping(wrapsLines, textView: textView, scrollView: scrollView)
 
         let ruler = JSONLineNumberRulerView(scrollView: scrollView, editor: textView)
         scrollView.verticalRulerView = ruler
@@ -46,7 +50,30 @@ struct JSONSourceEditor: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         context.coordinator.parent = self
         context.coordinator.textView?.onEscape = onEscape
+        if let textView = context.coordinator.textView,
+            textView.textContainer?.widthTracksTextView != wrapsLines
+        {
+            Self.setWrapping(wrapsLines, textView: textView, scrollView: scrollView)
+            context.coordinator.ruler?.needsDisplay = true
+        }
         context.coordinator.update(input)
+    }
+
+    private static func setWrapping(
+        _ enabled: Bool, textView: NSTextView, scrollView: NSScrollView
+    ) {
+        scrollView.hasHorizontalScroller = !enabled
+        textView.isHorizontallyResizable = !enabled
+        textView.autoresizingMask = enabled ? [.width] : []
+        textView.textContainer?.widthTracksTextView = enabled
+        textView.textContainer?.containerSize = NSSize(
+            width: enabled
+                ? max(1, scrollView.contentSize.width - textView.textContainerInset.width * 2)
+                : CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude)
+        if enabled {
+            textView.setFrameSize(NSSize(width: scrollView.contentSize.width, height: textView.frame.height))
+        }
     }
 
     @MainActor
@@ -80,6 +107,7 @@ struct JSONSourceEditor: NSViewRepresentable {
 
         func update(_ next: JSONEditorInput) {
             let previous = input
+            guard previous.revision != next.revision || previous.analysis != next.analysis else { return }
             input = next
             guard let textView else { return }
             if textView.string != next.source {
@@ -108,7 +136,7 @@ struct JSONSourceEditor: NSViewRepresentable {
         private func applyHighlight(
             _ analysis: JSONEditorAnalysis, to textView: JSONEditorTextView
         ) {
-            guard let storage = textView.textStorage else { return }
+            guard !textView.hasMarkedText(), let storage = textView.textStorage else { return }
             let fullRange = NSRange(location: 0, length: storage.length)
             storage.beginEditing()
             storage.setAttributes(JSONSourceEditor.baseAttributes, range: fullRange)
@@ -131,27 +159,17 @@ struct JSONSourceEditor: NSViewRepresentable {
 
         private func reportCursor() {
             guard let textView else { return }
-            let source = textView.string as NSString
-            let location = min(textView.selectedRange().location, source.length)
-            var line = 1
-            var lineStart = 0
-            var offset = 0
-            while offset < location {
-                let range = source.lineRange(for: NSRange(location: offset, length: 0))
-                guard NSMaxRange(range) <= location else { break }
-                line += 1
-                lineStart = NSMaxRange(range)
-                offset = lineStart
-            }
-            parent.onCursorChange(line, location - lineStart + 1)
+            let location = min(textView.selectedRange().location, textView.textStorage?.length ?? 0)
+            let index = JSONEditorEngine.lineIndex(at: location, starts: textView.lineStarts)
+            parent.onCursorChange(index + 1, max(0, location - textView.lineStarts[index]) + 1)
         }
 
         private static func color(for kind: JSONSyntaxKind) -> NSColor {
             switch kind {
-            case .key: return .systemBlue
-            case .string: return .systemGreen
-            case .number: return .systemPurple
-            case .keyword: return .systemOrange
+            case .key: return NSColor(Theme.Colors.jsonKey)
+            case .string: return NSColor(Theme.Colors.jsonString)
+            case .number: return NSColor(Theme.Colors.jsonLiteral)
+            case .keyword: return NSColor(Theme.Colors.jsonKeyword)
             }
         }
     }
@@ -181,7 +199,8 @@ struct JSONSourceEditor: NSViewRepresentable {
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.isContinuousSpellCheckingEnabled = false
         textView.smartInsertDeleteEnabled = false
-        textView.usesFindPanel = true
+        textView.usesFindBar = true
+        textView.isIncrementalSearchingEnabled = true
         textView.allowsUndo = true
         textView.typingAttributes = baseAttributes
     }

@@ -15,7 +15,7 @@ The command palette is a borderless floating `NSPanel` hosting SwiftUI; see
   activation. `Features/PaletteRowIndex.swift` is that mapping and stays **Foundation-only and pure** —
   no SwiftUI, no AppKit — so `palette-selection-test` compiles the shipped type rather than a copy.
   Section headers are not selectable and never consume an index.
-- **While a footer menu is open the search field never resigns first responder.** Input is frozen
+- **While a palette menu is open the search field never resigns first responder.** Input is frozen
   instead; resigning shifts the text a point or two.
 - **Focus restoration is load-bearing.** Paste targets the recorded `previousApp` and requires the
   Accessibility permission (`Permissions.ensureAccessibility()`).
@@ -57,8 +57,16 @@ SwiftUI search field re-focuses. `.jsonEditor` is the exception: the token focus
 while the still-mounted search field becomes an invisible structural placeholder in the header.
 
 Hiding schedules Pop to Root Search, and `PaletteWindowController.popToRoot` is its only path: the
-palette returns to the launcher *and* chat starts a new conversation, at once or after
-`popToRootTimeout`, unless a re-summon inside that window consumes the pending reset first. An
+palette returns to the launcher *and* chat starts a new conversation after the configured
+`popToRootTimeout`, unless a re-summon inside that window consumes the pending reset first. An unset
+preference keeps the current screen, query and draft for five minutes; an explicitly selected
+Immediately still resets on close. The global shortcut, menu-bar Open action and app reopen all use
+the same generic summon path, which restores the snapshot captured at hide instead of preparing a
+fresh launcher; only the expiry timer deletes that snapshot and changes state back to root. This also
+covers another component changing live palette state while it is hidden. A summon that races ahead of
+the hide callback presents the still-current state directly. A still-visible panel that has already
+resigned key status is restored by that same path; the shortcut only hides a visible panel while it is
+still key. An
 unfinished chat is a thing being done, exactly like a typed query, so the screen and the conversation
 are reset together rather than the screen alone. A reply still streaming is the one exception — it was
 asked for, and resetting would throw the answer away. Nothing is lost either way: a conversation is
@@ -76,7 +84,8 @@ palette indexes into it. Adding a mode means adding a conformer, not a branch in
 | `.emoji` | `EmojiScreen` | `EmojiGridView` |
 | `.fileSearch` | `FileSearchScreen` | `FileSearchList` (see [file-search.md](file-search.md)) |
 | `.jsonEditor` | `JSONEditorScreen` | `JSONEditorView` (see [json-editor.md](json-editor.md)) |
-| `.schedule` | `ScheduleScreen` | `ScheduleList` (see [calendar.md](calendar.md)) |
+| `.ossUpload` | `OSSUploadScreen` | `OSSUploadView` (see [oss-upload.md](oss-upload.md)) |
+| `.calendar` | `CalendarScreen` | `CalendarView` (see [calendar.md](calendar.md)) |
 | `.uninstall` | `UninstallScreen` | `UninstallList` (see [uninstall.md](uninstall.md)) |
 | `.quicklinks` | `QuicklinkListScreen` | `QuicklinkList` |
 | `.quicklinkArguments` | `QuicklinkArgumentsScreen` | `QuicklinkArgumentsView` (see [quicklinks.md](quicklinks.md#the-argument-prompt)) |
@@ -131,13 +140,26 @@ The typed values live on `PaletteState.commandArguments`, keyed by
 
 The flat `selection` index is the single source of truth for highlight / activation and **must always
 match the visible row order**, including the card at index 0 when present — the calculator's (see
-[calculator.md](calculator.md)) or the meeting join card (see [calendar.md](calendar.md)), never both.
+[calculator.md](calculator.md)).
 
 ## Window placement
 
 `PaletteWindowController` resolves an anchor (left edge + top edge) **once per summon** and reuses it
-for every compact↔expanded resize, so only the height changes and the top edge never drifts. The
+for every compact↔expanded resize, keeping the top edge fixed when the requested height fits. The
 anchor is dropped on hide, so the next summon re-resolves for wherever the user is then.
+
+Settings → General → Appearance offers component heights Low (475), Medium (600), and High (750).
+Low preserves the original default. The setting is persisted and backed up, and applies on the next
+summon. JSON Editor uses the medium height (600) regardless of the global choice; switching modes
+reapplies the appropriate height. Other components follow the global setting. The
+compact mode keeps its existing height. Expanded panels are capped to the display's usable
+height and shifted upward only when needed to keep the bottom above the Dock.
+
+Visible compact↔expanded and component-height changes use a 200 ms AppKit frame animation with
+the drawer curve `(0.32, 0.72, 0, 1)`. The top anchor stays fixed whenever the target fits on screen.
+Repeated requests for the same target do not restart the animation; a new target retargets it.
+Hidden-window placement and initial summon remain immediate, as do changes with Reduce Motion enabled.
+Hiding or beginning a drag cancels the resize. No editor view is recreated or scaled for this effect.
 
 All of the arithmetic lives in `PalettePlacement`, which is CoreGraphics-only and takes every screen
 fact as a parameter, so `palette-placement-test` drives the shipped rules rather than a copy of them.
@@ -153,8 +175,8 @@ hit-test only beyond it, so clicking or dragging the text still edits and select
 
 AppKit moves the frame without going through the controller, so `windowDidMove` writes the new top-left
 back into the anchor — otherwise the next compact↔expanded resize would snap the panel back to the
-position it was summoned at. That write is idempotent, since `positionPanel` places the frame at exactly
-the anchor and its own `setFrame` round-trips the same values.
+position it was summoned at. During a programmatic resize, intermediate move notifications are ignored
+so they cannot overwrite the target anchor. Beginning a drag cancels the resize and captures the live frame.
 
 **The handle tracks the gesture itself rather than calling `performDrag(with:)`.** That method hands the
 drag to the window server and returns immediately, so it can say when a drag *starts* but never when it
@@ -277,9 +299,10 @@ the arrow outside it, and AppKit's own alternation over the field came straight 
 ## One menu at a time
 
 `RootPaletteView` holds a single `OpenMenu?` rather than a flag per menu, so "at most one is open" is
-structural instead of a pair of `onChange` handlers pushing each other closed. Three cases today —
-the ⌘K Actions menu (`.bottomTrailing`), the app menu (`.bottomLeading`) and the clipboard type
-filter (`.topTrailing`, hung under its header button). `menuContent` resolves the open case to one
+structural instead of a pair of `onChange` handlers pushing each other closed. The ⌘K Actions menu
+opens bottom-right on the launcher and below the header at top-right on plugin screens. The launcher
+app menu remains bottom-left; clipboard filtering and AI model selection open under their header buttons.
+Settings has a direct gear button at the right of the launcher header. `menuContent` resolves the open case to one
 `PaletteMenuContent` — a row count, a row action and a view built on demand — so ↑/↓, plain ↵, Esc and
 the click-away catcher serve every menu without knowing which is up. A screen supplies its rows as a
 `PopoverMenuContent` through `actions(at:)` and the default `menuContent` wraps them; a screen whose
@@ -357,6 +380,6 @@ app:
 Both require the Accessibility permission (`Permissions.ensureAccessibility()`).
 
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
-name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and
+name + bundle path), so Clipboard and Emoji can name it — the header action pill reads "Paste to Notes" and
 the ⌘K paste rows carry the app's icon. Resolved once per summon, never per render, and deliberately
 not cleared by `prepare` (pop-to-root resets the screen, not the target).

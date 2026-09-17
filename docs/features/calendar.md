@@ -1,203 +1,87 @@
-# Calendar and meeting join
+# Calendar
 
-Four surfaces over the Mac's own calendar: a **join card** at the top of an empty launcher, a
-**Join Next Meeting** global shortcut, the **menu bar**, and meetings that **join themselves**.
-Around them sit five launcher commands, a `My Schedule` sub-screen, a camera preview, and individual
-events as searchable launcher entries.
+Tinycast ships a read-only Chinese calendar inside the command palette. It shows Gregorian dates,
+weekdays, lunar dates, festivals, solar terms, traditional almanac references, official Chinese
+holiday arrangements and a short-range weather forecast. It never reads or writes Calendar.app,
+creates events, joins meetings or asks for calendar and camera permissions.
 
 ## Invariants
 
-- **Nothing polls, and there is one timer.** `.EKEventStoreChanged` is the reload signal, held
-  through the RAII `NotificationToken`, and `NSWorkspace.didWakeNotification` covers the sleep it
-  cannot. `MeetingClock` is the only timer: one tick on the minute boundary, running **while
-  something is watching** — the palette, the menu bar, or auto join. With all three off, an idle Mac
-  owns no timer at all. `CalendarCoordinator.applyClock` is the one place that decides, and the
-  clock's `Task` is stored and cancelled in `stop()` and in an `isolated deinit`.
-- **Auto join fires at most once per meeting per launch**, and only for a meeting starting at or
-  after the moment the switch was armed. Both are why `AutoJoinPolicy` takes `armedAt` and the
-  already-joined set rather than reading a clock of its own.
-- **The camera settles before the panel opens, and stops after it closes.**
-  `CameraPreviewSession.start()` resolves access and blocks on `startRunning` first, then hands
-  `CameraPreviewController` a settled `Feed` — so the panel's first frame is live video rather than a
-  stage it has to swap out, and the TCC prompt never takes key from a panel already up.
-  `stop()` runs from the fade-out's completion, so the camera light never outlives the preview but
-  is never torn down under a visible one either.
-- **The card's window is `[start - lead, min(start + lead, end)]`.** The grace period exists because
-  everyone joins late; the `min` is why it never outlives a meeting shorter than the lead.
-- **Recurrence comes from `predicateForEvents(withStart:end:calendars:)`**, which expands occurrences
-  itself. Masters are never fetched and recurrence is never hand-rolled.
-- **`UpcomingWindow.agenda` is the only place that says which events count** — timed, not declined,
-  not over, in start order. The card, the chord, the menu bar, the schedule and the launcher slice all
-  go through it, so they cannot drift apart. Because an event ending changes nothing in EventKit,
-  the filter alone is not enough for the launcher slice: `CalendarCoordinator` republishes it on the
-  minute boundary and on every summon.
-- **`calendarEnabled` doubles as consent**, so it is in `SettingsBackupCoverage.deliberatelyExcluded`
-  and only `CalendarCoordinator.setCalendarEnabled` may write it. Tinycast's own dialog comes first,
-  the macOS prompt second, and only from the gesture that asked.
-- **Per-calendar toggles live on `CalendarStore`, not `AppSettings`.** Calendar identifiers are
-  machine-specific, so they are deliberately outside the backup mirror — the same reasoning as
-  `palettePosition`.
-- **`Model/` stays Foundation-only**; `calendar-test` compiles the shipped sources. EventKit lives in
-  `Service/CalendarStore.swift` and nothing EventKit-shaped leaves it.
+- **The calendar is a palette screen, not a separate window.** `CalendarScreen` owns the 42 selectable
+  rows and `CalendarView` renders the month grid plus the selected day's detail.
+- **Every month is exactly 42 Monday-first cells.** Leading and trailing days remain selectable but
+  render with reduced opacity, so keyboard movement never needs a special incomplete-week path.
+- **China-facing data uses `Asia/Shanghai`.** Gregorian keys, lunar conversion, festivals, solar
+  terms, holiday arrangements and almanac calculations agree on the same civil day regardless of the
+  Mac's current time zone.
+- **`Model/` is Foundation-only.** `calendar-test` compiles the shipped calendar models and verifies
+  known lunar, solar-term, holiday and almanac dates.
+- **Holiday arrangements are official, finite data.** `ChineseHolidayPlan.supportedYears` names the
+  bundled range. A missing future year means “no published arrangement in this build,” not a guessed
+  weekend or workday.
+- **Almanac 宜/忌 is a traditional folk reference.** It is deterministic local data, clearly labelled
+  as such, and is not presented as factual or professional advice.
+- **Weather owns one private ephemeral session per request.** `urlCache` is disabled; the feature's
+  atomic JSON snapshot is the only cache on disk.
 
-## The pure layer
+## Pure calendar layer
 
-`Model/` holds the whole decision, with every clock read injected:
+`CalendarEngine.month(containing:)` produces a six-week grid. Every `CalendarDay` combines:
 
-- **`MeetingLink`** — the join link plus its `Provider`. Ten named services, plus `.generic` for any
-  other `http(s)` link the event carries.
-- **`MeetingEvent`** — one occurrence, flattened out of `EKEvent`.
-- **`UpcomingWindow`** — `agenda`, `carded`, `joinable` and `countdown`.
-- **`MeetingDay`** — the Today / Tomorrow buckets, mirroring the clipboard's `DateBucket`.
-- **`MenuBarSummary`** — which event the menu bar carries, and for how long.
-- **`AutoJoinPolicy`** — whether a meeting should open itself, and which one.
-- **`EventDraft`** — what the New Event prompt collects, before anything touches the calendar.
+- a Gregorian date, weekday, current-month and today flags;
+- `LunarDate`, derived with Foundation's Chinese calendar;
+- a 24-solar-term marker and common Gregorian or lunar festival;
+- an optional `HolidayArrangement` (`休` or adjusted workday `班`);
+- an `AlmanacDay` with the sexagenary day, twelve-day officer, clash/direction and 宜/忌 lists.
 
-### Finding the link
+The search field accepts `YYYY-MM-DD`, `YYYY/MM/DD`, `MM-DD`, `MM/DD`, `today` and `今天`. A valid
+date opens its month and selects that cell. Arrow keys move by one day horizontally and one week
+vertically; crossing a grid edge opens the adjacent month.
 
-`MeetingLink.detect(fields:)` is handed `[event.url, event.location, event.notes]` in that order and
-scans each for `http(s)` runs. **A named provider anywhere beats a bare link found earlier**, so a
-"reset your password" URL at the top of an invite never wins over the Meet link below it.
+Solar terms use the standard tropical-year minute-offset calculation. The almanac day cycle is
+anchored to the published sexagenary day for 17 February 2026, then calculated by whole civil days.
+The twelve-day officer follows the latest monthly `节` branch.
 
-Link extraction is hand-rolled rather than `NSDataDetector`: a detector is not `Sendable`, and
-rebuilding one per event costs more than the scan it replaces. A URL ends at whitespace or a quote,
-and trailing punctuation is trimmed, so `(https://whereby.com/acme).` yields the URL alone.
+## Chinese holiday arrangements
 
-**A URL on a known host that fails that provider's path rule is rejected outright, not demoted to
-`.generic`** — `zoom.us/download` sits in half the invites people are sent, and `meet.google.com/tel/…`
-is a dial-in helper rather than a meeting.
+`ChineseHolidayPlan` contains the State Council's published 2025 and 2026 holiday ranges and adjusted
+workdays. Holiday cells show `休`; weekend workdays show `班`. The detail pane names the arrangement.
+Ordinary weekends are not marked as statutory holidays.
 
-### Opening it
+Adding another year means adding the newly published ranges and workdays, extending
+`supportedYears`, and adding exact boundary assertions to `calendar-test`. Do not extrapolate a
+future arrangement.
 
-`MeetingLauncher.join` prefers the desktop app: `MeetingLink.appURL` rewrites a Zoom link to
-`zoommtg://zoom.us/join?confno=…` (carrying `pwd` when present) and a `teams.microsoft.com` link to
-`msteams:` plus its path and query. Nothing else is rewritten — the rest of the table has no
-unambiguous scheme, and guessing one would open the wrong thing. If no app claims the scheme, the
-plain `https` link opens instead.
+## Weather
 
-No brand artwork ships with the app, so every named provider draws `video.fill` and the **name**
-carries the identity; `.generic` draws `link`.
+`WeatherService` first resolves the configured city through Open-Meteo geocoding, then requests the
+current conditions and a 16-day daily forecast. WMO weather codes map to a small local set of Chinese
+labels and SF Symbols. The selected day's detail shows conditions, low/high temperature and maximum
+precipitation probability when that date is inside the forecast window.
 
-## The card
+`CalendarStore` starts with `北京`, persists the user's city under the app's defaults domain and keeps
+`calendar-weather.json` under `AppPaths.caches()`. A snapshot stays fresh for 30 minutes; a failed
+refresh leaves any existing forecast visible, reports the failure in the date detail and Settings,
+and offers a retry from the date detail. Weather requires no API key.
 
-The card is `LauncherScreen.Row.meeting`, prepended the way the calculator card is. The two can never
-both lead: **the calculator only answers a typed query and the card only an empty one**, which is what
-keeps the flat selection index a single-row offset. `LauncherList.LeadCard` is that fact made
-structural — one optional card, one selected flag, one activate closure, whichever feature owns it.
+## Commands and settings
 
-The countdown re-renders from `MeetingClock.now`, not from a keystroke, so `in 4 min` becomes
-`in 3 min` on the boundary. A partial minute rounds **up** (`in 1 min` at 20 seconds out), and the
-first minute past the start reads `now` rather than `0 min ago`.
+There is one launcher command, `command:calendar`, and one bindable action, `hotkey.calendar`. Opening
+it switches the existing palette to `.calendar`. Return copies the selected Gregorian date and lunar
+label; Today restores the current month and date.
 
-Like the calculator card, a card appearing while the palette is already open shifts the highlight down
-by one row. That is the existing behaviour of the row above it and is left alone.
+The month title expands an inline `YYYY-MM` jump field. Month arrows keep the selected day number,
+clamped to the destination month's last day. Keyboard movement crosses grid edges by actual civil
+days. The selected date is retained in `CalendarStore` for the current app session; reopening the
+calendar does not force today. Adjacent-month cells open their own month when clicked.
 
-## The chord
+Date cells are accessible buttons with separate hover, selection and today treatments. The detail
+pane groups the full date, forecast and almanac. Its city button expands an inline editor, and refresh
+is available even when a cached forecast is present. Failed refreshes label the cached forecast.
 
-`UpcomingWindow.joinable` is deliberately wider than `carded`, and answers in this order:
+The month chooser and city editor use a 200 ms local disclosure transition. Outgoing controls are
+removed immediately while incoming content fades in; city disclosure also rotates its chevron.
+Reduce Motion makes these changes immediate. Date navigation and weather data updates do not animate.
 
-1. Whatever the card is showing — so the chord always joins what is on screen.
-2. Anything currently running, however long ago it started.
-3. The next meeting with a link.
-
-It reads the live clock rather than `MeetingClock`, because a chord fires with the palette closed and
-nothing ticking.
-
-## Commands
-
-All five leave the launcher when the feature is off, through `CalendarCoordinator.applyEnabled`,
-the `applyQuicklinksPresence` twin.
-
-| Command | Does | Bindable |
-| --- | --- | --- |
-| Join Next Meeting | Opens the link for the carded, running, or next meeting. | yes |
-| My Schedule | Opens the `.schedule` palette mode. | yes |
-| Create Event | Prompts for a title, a start and a duration, and writes the event. | yes |
-| Copy Meeting Link | The same meeting's link, to the pasteboard. | no |
-| Open in Calendar | Hands the meeting to Calendar.app. | no |
-
-**A command that opens a surface is bindable**; the two that act on the next meeting are reached
-through the join card's own ⌘K menu instead, where the meeting they act on is on screen.
-
-A miss reports through the HUD (`Nothing to join right now`), not a dialog: it is transient and there
-is nothing to acknowledge.
-
-## Reading the store
-
-`CalendarStore` queries `[startOfToday, endOfTomorrow + 1 day)` in the Mac's own zone. **The fetch
-stays on the main actor**: two days of events is a sub-millisecond query and `EKEventStore` is not
-`Sendable`, so pushing it off-main would be a fight with no measurable gain. Both the launch-time load
-and the per-summon refresh are deferred into a `Task`, because the first EventKit query pays for its
-XPC warm-up and both of those paths are protected.
-
-The `EKEventStore` itself is built on first use, so a Mac with the feature off never loads EventKit.
-After a grant the store is dropped and rebuilt — one built before the grant does not see the new
-calendars.
-
-`MeetingEvent.id` is the event identifier plus the occurrence's start, because a recurring series
-shares one identifier across every instance. `calendarItemID` is kept separately: it is the only
-handle `ical://ekevent/…` accepts, and a recurring occurrence opens its series.
-
-A cancelled event never reaches a surface. A declined one is dropped by `agenda`, and an all-day or
-already-finished one with it.
-
-## The menu bar
-
-`MenuBarSummary` decides what the menu-bar item carries: the earliest event still inside its window,
-which is `[start - lead, start)` for **Automatically** and `[start - lead, min(start + hideAfter, end))`
-for the timed options. Because the earliest qualifying event wins, one hiding hands the space to the
-next with no extra logic.
-
-`MenuBarLabel` reads the coordinator rather than the stores, which is what scopes Observation to the
-label instead of re-running the whole `MenuBarExtra` scene. It falls back to the app's own glyph when
-nothing is due, so the item never disappears out from under the user, and the title is capped at
-`MenuBarSummary.titleCap` characters — a hard cap is the only thing that bounds a menu bar.
-
-A click opens the usual menu, with `Join <title>` added on top. **A bare click never joins**: the
-menu bar is not a button, and a mis-click there would open a call.
-
-## Auto join and the preview
-
-`AutoJoinPolicy` answers the meeting the join card is already showing, narrowed by three rules —
-`start >= armedAt`, `now >= start`, and not already joined. Reusing `UpcomingWindow.carded` rather
-than inventing a second window is what keeps one knob, `joinWindowMinutes`, governing the card, the
-chord and auto join alike.
-
-The meeting is marked joined **before** the confirmation is raised, so declining does not re-ask a
-minute later.
-
-Every join — the card, the chord, the menu bar, auto join — funnels through
-`CalendarCoordinator.join(_:uninvited:)`:
-
-```
-join(meeting)
-  ├─ no link ────────────► openInCalendar
-  ├─ camera preview on ──► CameraPreviewController.present → join, or drop
-  ├─ uninvited + confirm ► core.confirm → join, or drop
-  └─ otherwise ──────────► MeetingLauncher.join
-```
-
-**The preview is itself a confirmation**, so it stands in for one when both are on rather than asking
-twice. `CameraPreviewPanel` sits at `.floating`, below a dialog's `.modalPanel`, so a failure report
-still lands on top of it.
-
-## Settings
-
-The Calendar pane carries the master switch (routed through the coordinator so the consent gate cannot
-be bypassed), the `Join Next Meeting` recorder, the join-window picker, and the per-calendar checkbox
-list — `LauncherItemsSection`'s shape, including the one `Form` row holding a `LazyVStack`, because a
-`Form` realizes every row it is handed.
-
-The hidden-calendar set stores **exclusions**, so a calendar added after the setting was written
-defaults to on. Holidays and Birthdays are what people switch off.
-
-`autoJoinMeetings` and `cameraPreview` join `calendarEnabled` in
-`SettingsBackupCoverage.deliberatelyExcluded`: one arms the app to open links unattended and the
-other turns on the camera, and an import must grant neither. The menu-bar settings carry over
-normally.
-
-Both menu-bar enums put their default at `rawValue == 0`, so `defaults.integer(forKey:)` returning 0
-for an unset key lands on `.never` and `.automatically` rather than fighting them.
-
-The Permissions pane shows calendar access alongside Accessibility, but only ever opens System
-Settings: the Calendar pane's own switch is the one place that may prompt.
+Settings ▸ Calendar contains the weather city, refresh state, the command's alias/hotkey/visibility
+controls and a concise description of the bundled data. Calendar no longer appears in Permissions.

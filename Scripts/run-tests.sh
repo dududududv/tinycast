@@ -101,7 +101,11 @@ run app-name-test          Tinycast/Platform/AppDisplayName.swift
 run favorites-test         $L/FavoriteSlots.swift
 run calc-test              Tinycast/Features/Calculator/Model/*.swift
 run json-editor-test       Tinycast/Features/JSONEditor/Model/*.swift
-run calendar-test          Tinycast/Features/Calendar/Model/*.swift
+run oss-upload-test        Tinycast/Features/OSSUpload/Model/*.swift \
+                           Tinycast/Features/OSSUpload/Service/OSSV4Signer.swift \
+                           Tinycast/Features/OSSUpload/Service/OSSUploadService.swift
+run calendar-test          Tinycast/Features/Calendar/Model/*.swift \
+                           Tinycast/Features/Calendar/Service/WeatherService.swift
 run clipboard-test         Tinycast/Features/Clipboard/Model/ClipboardStore.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardFilter.swift
 run emoji-test             Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
@@ -112,6 +116,9 @@ run palette-selection-test Tinycast/Features/PaletteRowIndex.swift \
 run appearance-test        Tinycast/Platform/Appearance.swift \
                            Tinycast/DesignSystem/Theme.swift \
                            Tinycast/Features/Settings/AppAppearance.swift
+run localization-test
+run palette-retention-test Tinycast/Features/Settings/Model/PopToRootTimeout.swift \
+                           Tinycast/Palette/PaletteCoordinator.swift
 run palette-placement-test Tinycast/Platform/Appearance.swift \
                            Tinycast/DesignSystem/Theme.swift \
                            Tinycast/Palette/PalettePlacement.swift

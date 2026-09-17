@@ -21,6 +21,9 @@ struct JSONEditorScreen: PaletteScreen {
             header: state.displayName,
             items: [
                 PopoverMenuItem(
+                    title: "搜索 JSON", systemImage: "magnifyingglass", shortcut: "⌘F",
+                    action: editor.showFind),
+                PopoverMenuItem(
                     title: "New", systemImage: "doc.badge.plus", shortcut: "⌘N",
                     action: editor.newDocument),
                 PopoverMenuItem(

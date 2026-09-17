@@ -10,6 +10,7 @@ enum Theme {
         static let md: CGFloat = 8
         static let lg: CGFloat = 10
         static let xl: CGFloat = 12
+        static let panelInset: CGFloat = 16
         static let xxl: CGFloat = 20
         /// Calculator answer card's roomier vertical breathing room.
         static let xxxl: CGFloat = 28
@@ -50,6 +51,8 @@ enum Theme {
     enum Size {
         static let panelWidth: CGFloat = 750
         static let panelHeight: CGFloat = 475
+        static let panelMediumHeight: CGFloat = 600
+        static let panelHighHeight: CGFloat = 750
         /// Opening size on a first run and the floor: below it the title bar's own parts collide.
         static let noteWindow = CGSize(width: 440, height: 180)
         static let noteEditorInset: CGFloat = 16
@@ -135,6 +138,8 @@ enum Theme {
         static let settingsWindow = CGSize(width: 860, height: 700)
         static let jsonEditorToolbar: CGFloat = 38
         static let jsonEditorStatusBar: CGFloat = 28
+        static let calendarDetailWidth: CGFloat = 260
+        static let calendarDayHeight: CGFloat = 42
         /// Settings sidebar: a fixed column, wide enough for "Window Management".
         static let settingsSidebar: CGFloat = 215
         /// The narrowest the pane column may get before a grouped row's control starts colliding.
@@ -155,8 +160,6 @@ enum Theme {
         static let dialogWidth: CGFloat = 420
         /// A dialog's leading glyph, larger than a row icon: it carries the subject.
         static let dialogIcon: CGFloat = 32
-        /// 16:9 at the dialog's own width, so the two surfaces read as siblings.
-        static let cameraPreview = CGSize(width: 420, height: 236)
         /// Transient volume HUD shown after any volume or mute command.
         static let hudWidth: CGFloat = 200
         static let hudHeight: CGFloat = 100
@@ -173,11 +176,19 @@ enum Theme {
         static let volumeHUD: TimeInterval = 1.6
         /// How a borderless surface arrives and leaves; the exit is shorter, so it feels quick.
         static let enter: TimeInterval = 0.18
+        static let paletteResize: TimeInterval = 0.20
+        static let pressRelease: TimeInterval = 0.16
         static let exit: TimeInterval = 0.12
         /// Fade-in/out for a hover `Tooltip`.
         static let tooltip: TimeInterval = 0.15
         static let copyFeedback: TimeInterval = 1.2
         static let chatFooter: TimeInterval = 0.12
+    }
+
+    enum Motion {
+        static let feedback = Animation.timingCurve(0.23, 1, 0.32, 1, duration: Duration.enter)
+        static let disclosure = Animation.timingCurve(0.23, 1, 0.32, 1, duration: Duration.paletteResize)
+        static let pressRelease = Animation.timingCurve(0.23, 1, 0.32, 1, duration: Duration.pressRelease)
     }
 
     /// System text styles (not hardcoded sizes) so the UI honors Dynamic Type.
@@ -216,6 +227,18 @@ enum Theme {
     }
 
     enum Colors {
+        static let jsonKey = adaptive(
+            dark: NSColor(srgbRed: 0.38, green: 0.68, blue: 0.94, alpha: 1),
+            light: NSColor(srgbRed: 0.23, green: 0.35, blue: 0.47, alpha: 1))
+        static let jsonString = adaptive(
+            dark: NSColor(srgbRed: 0.48, green: 0.76, blue: 0.39, alpha: 1),
+            light: NSColor(srgbRed: 0.31, green: 0.40, blue: 0.27, alpha: 1))
+        static let jsonLiteral = adaptive(
+            dark: NSColor(srgbRed: 0.77, green: 0.56, blue: 0.90, alpha: 1),
+            light: NSColor(srgbRed: 0.48, green: 0.25, blue: 0.66, alpha: 1))
+        static let jsonKeyword = adaptive(
+            dark: NSColor(srgbRed: 0.91, green: 0.63, blue: 0.32, alpha: 1),
+            light: NSColor(srgbRed: 0.46, green: 0.33, blue: 0.26, alpha: 1))
         /// Resolves against the window's `effectiveAppearance`, which `NSHostingView` republishes as
         /// SwiftUI's `colorScheme`, so a token repaints without anything observing the setting.
         static func adaptive(dark: NSColor, light: NSColor) -> Color {

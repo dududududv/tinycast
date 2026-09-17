@@ -74,6 +74,36 @@ struct JSONEditorTests {
     }
 
     static func main() {
+        check("valid paste is formatted", JSONEditorEngine.formatPastedSource("{\"a\":1}").contains("\n"))
+        check("invalid paste is preserved exactly", JSONEditorEngine.formatPastedSource("{ bad\n") == "{ bad\n")
+        let starts = JSONEditorEngine.lineStarts(in: "中文\n😀\n")
+        check("line index uses UTF-16", starts == [0, 3, 6])
+        check("line index locates emoji line", JSONEditorEngine.lineIndex(at: 5, starts: starts) == 1)
+        check(
+            "line index includes trailing empty line", JSONEditorEngine.lineIndex(at: 6, starts: starts) == 2)
+        let large =
+            "[" + Array(repeating: "{\"key\":123,\"value\":\"test\"}", count: 30_000).joined(separator: ",\n")
+            + "]"
+        let clock = ContinuousClock()
+        let start = clock.now
+        let analysis = JSONEditorEngine.analyze(large)
+        check("large documents still validate", analysis.validation == .valid)
+        check("large documents avoid full token allocation", analysis.tokens.isEmpty)
+        let lines = JSONEditorEngine.lineStarts(in: large)
+        for _ in 0..<10_000 {
+            check(
+                "indexed lookup finds final line",
+                JSONEditorEngine.lineIndex(at: large.utf16.count, starts: lines) == 29_999)
+        }
+        print("Large JSON analysis + index + 10000 lookups: \(start.duration(to: clock.now))")
+        check("brackets in strings are literal", JSONEditorEngine.isInsideString(#"{"key":"["#))
+        check("escaped quotes do not end strings", JSONEditorEngine.isInsideString(#""a\"b"#))
+        check("closed strings allow pairing", !JSONEditorEngine.isInsideString(#"{"key": "value","#))
+        let nested = JSONEditorEngine.newline(in: "  {}", at: 3)
+        check("newline expands a bracket pair", nested.text == "\n    \n  ")
+        check("caret stays on the inner line", nested.caret == 5)
+        check("newline keeps indentation", JSONEditorEngine.newline(in: "  1,", at: 4).text == "\n  ")
+        check("empty newline is safe", JSONEditorEngine.newline(in: "", at: 0).text == "\n")
         do {
             testValidation()
             try testTransforms()

@@ -16,6 +16,8 @@ Tinycast adds line numbers, syntax colours and validation without opening anothe
   finishes. Editing during a save leaves the document marked as changed.
 - Leaving or hiding the palette retains the draft. New and Open never discard an edited document
   without Tinycast's own confirmation.
+- The TextKit scroll view clips at its AppKit boundary, so its ruler cannot draw
+  through the status row or the palette footer after a resize or reactivation.
 
 ## Structure
 
@@ -32,3 +34,23 @@ Tinycast adds line numbers, syntax colours and validation without opening anothe
 The editor is owned by `AppCore` and reached through `JSONEditorCoordinator`. The launcher command
 switches `PaletteMode` to `.jsonEditor`; the coordinator remains the single long-lived owner so a
 click-away or Pop to Root transition cannot lose an unsaved draft.
+
+The toolbar offers a session-retained line-wrap toggle. The ruler uses text-system positions rather
+than fixed line heights, including when a source line wraps. Invalid input exposes the parser's
+message inline and a button to locate the issue. Typing an opening brace or bracket outside a string
+inserts its partner; Return preserves indentation and expands an empty pair with two-space indentation.
+Marked-text composition retains native behavior. A background transformation applies only
+to the exact document revision it started with, so subsequent edits cannot be overwritten.
+
+Plain-text paste prepares the resulting document and formats valid JSON off-main before inserting it
+as one undoable edit. Invalid JSON is inserted unchanged for correction. Marked-text composition stays
+native. Documents above 128,000 UTF-8 bytes skip full syntax tokenization and show a simplified-highlight
+status; validation and formatting remain available. Line starts are rebuilt on source edits, then
+cursor and ruler lookups use binary search. Ruler drawing has a bounded visible-line pass.
+The top text inset always anchors ruler drawing to line one; hit testing starts inside the text area.
+Counts are updated only on source edits, not on cursor movement. Syntax colours use distinct blue keys, green
+strings, purple numbers and orange keywords with appearance-aware tokens.
+
+The toolbar search button and Command-F open TextKit's find bar inside the editor scroll view rather
+than a separate find panel. Command-G and Shift-Command-G navigate matches. Escape from the source
+editor closes an open find bar before dismissing the palette. Large-text mode still supports Find.

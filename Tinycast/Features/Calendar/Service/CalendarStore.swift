@@ -1,214 +1,121 @@
-import AppKit
-import EventKit
+import Foundation
 
-/// Today's and tomorrow's meetings, read from EventKit. See docs/features/calendar.md.
 @MainActor
 @Observable
 final class CalendarStore {
-    /// Flattened occurrences over `[startOfToday, endOfTomorrow]`, newest query wins.
-    private(set) var events: [MeetingEvent] = []
-    private(set) var calendars: [MeetingCalendar] = []
-    private(set) var access: CalendarAccess = Permissions.calendarAccess()
+    private(set) var displayedMonth: Date
+    private(set) var selectedDate: Date
+    private(set) var days: [CalendarDay]
+    private(set) var weather: WeatherSnapshot?
+    private(set) var isLoadingWeather = false
+    private(set) var weatherError: String?
+    private(set) var city: String
 
-    /// Fired whenever `events` changes, so the launcher's meeting slice is republished.
-    @ObservationIgnored var onChange: (() -> Void)?
+    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let cacheURL: URL
+    @ObservationIgnored private var weatherTask: Task<Void, Never>?
 
-    private let defaults = UserDefaults.standard
-    private let hiddenKey = "hiddenMeetingCalendars"
-    /// Exclusions, not inclusions, so a calendar added after this was written defaults to on.
-    private var hiddenCalendarIDs: Set<String>
+    private static let cityKey = "calendarWeatherCity"
+    private static let cacheLifetime: TimeInterval = 30 * 60
 
-    /// Built on first use, so a Mac with the feature off never loads EventKit at launch.
-    @ObservationIgnored private var eventStore: EKEventStore?
-    @ObservationIgnored private var changeObserver: NotificationToken?
-    @ObservationIgnored private var wakeObserver: NotificationToken?
-    @ObservationIgnored private var lastReloadAt: Date?
-
-    /// How long a snapshot is trusted with the palette closed. `.EKEventStoreChanged` covers edits;
-    /// this covers the day rolling over and a Mac that slept through both.
-    private static let staleAfter: TimeInterval = 10 * 60
-
-    init() {
-        hiddenCalendarIDs = Set(defaults.stringArray(forKey: hiddenKey) ?? [])
+    init(
+        defaults: UserDefaults = .standard,
+        cacheDirectory: URL = AppPaths.caches(),
+        now: Date = Date()
+    ) {
+        self.defaults = defaults
+        cacheURL = cacheDirectory.appendingPathComponent("calendar-weather.json")
+        city = defaults.string(forKey: Self.cityKey) ?? "北京"
+        displayedMonth = CalendarEngine.startOfMonth(now)
+        selectedDate = now
+        days = CalendarEngine.month(containing: now, today: now)
+        weather = Self.readCache(from: cacheURL, city: city)
     }
 
-    // MARK: - Lifecycle
+    deinit {
+        weatherTask?.cancel()
+    }
 
     func start() {
-        access = Permissions.calendarAccess()
-        guard access == .granted else { return }
-        observeWake()
-        // Deferred: the first EventKit query pays for its XPC warm-up, and launch protects itself.
-        Task { reload() }
+        refreshWeather()
     }
 
-    func stop() {
-        changeObserver = nil
-        wakeObserver = nil
-        eventStore = nil
-        lastReloadAt = nil
-        publish([])
-        calendars = []
-    }
-
-    /// Tinycast's own consent dialog has already been accepted by the time this runs.
-    func requestAccess() async -> Bool {
-        let granted = await Permissions.requestCalendarAccess()
-        access = Permissions.calendarAccess()
-        guard granted else { return false }
-        // A store built before the grant never sees the new calendars; drop it and rebuild.
-        changeObserver = nil
-        eventStore = nil
-        reload()
-        return true
-    }
-
-    /// EventKit says when to reload, so nothing here polls. The palette adds one refresh per summon.
-    private func observeStoreChanges() {
-        guard changeObserver == nil, let eventStore else { return }
-        let center = NotificationCenter.default
-        let token = center.addObserver(
-            forName: .EKEventStoreChanged, object: eventStore, queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in self?.reload() }
-        }
-        changeObserver = NotificationToken(token, center: center)
-    }
-
-    /// A Mac asleep through a meeting wakes with a stale snapshot and no edit to trigger a reload.
-    private func observeWake() {
-        guard wakeObserver == nil else { return }
-        let center = NSWorkspace.shared.notificationCenter
-        let token = center.addObserver(
-            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in self?.reload() }
-        }
-        wakeObserver = NotificationToken(token, center: center)
-    }
-
-    // MARK: - Reading
-
-    /// The per-minute refresh: cheap when the snapshot still holds, which is almost always.
-    func reloadIfStale(now: Date) {
-        guard let lastReloadAt else {
-            reload()
+    func moveMonth(by offset: Int, now: Date = Date()) {
+        let calendar = CalendarEngine.gregorian()
+        guard let month = calendar.date(byAdding: .month, value: offset, to: displayedMonth) else {
             return
         }
-        let aged = now.timeIntervalSince(lastReloadAt) >= Self.staleAfter
-        // A day boundary invalidates the two-day span itself, however fresh the snapshot is.
-        let rolled = !Calendar.current.isDate(lastReloadAt, inSameDayAs: now)
-        guard aged || rolled else { return }
-        reload()
+        displayedMonth = CalendarEngine.startOfMonth(month, calendar: calendar)
+        days = CalendarEngine.month(containing: displayedMonth, today: now, calendar: calendar)
     }
 
-    /// Two days of events is a sub-millisecond query and `EKEventStore` is not `Sendable`, so this
-    /// stays on the main actor; only pure `MeetingEvent` values leave it.
-    func reload() {
-        access = Permissions.calendarAccess()
-        guard access == .granted else {
-            publish([])
+    func show(_ date: Date, now: Date = Date()) {
+        selectedDate = date
+        displayedMonth = CalendarEngine.startOfMonth(date)
+        days = CalendarEngine.month(containing: displayedMonth, today: now)
+    }
+
+    func select(_ date: Date) {
+        selectedDate = date
+    }
+
+    func showToday(now: Date = Date()) {
+        show(now, now: now)
+    }
+
+    func weather(on date: Date) -> WeatherDay? {
+        weather?.weather(on: date)
+    }
+
+    func updateCity(_ value: String) {
+        let next = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !next.isEmpty else {
+            weatherError = "请输入城市名称"
             return
         }
-        let store = eventStore ?? EKEventStore()
-        eventStore = store
-        observeStoreChanges()
-        lastReloadAt = Date()
+        city = next
+        defaults.set(next, forKey: Self.cityKey)
+        weather = Self.readCache(from: cacheURL, city: next)
+        refreshWeather(force: true)
+    }
 
-        let sources = store.calendars(for: .event)
-        calendars =
-            sources
-            .map {
-                MeetingCalendar(
-                    id: $0.calendarIdentifier, title: $0.title, accountName: $0.source.title)
+    func refreshWeather(force: Bool = false) {
+        if !force, let weather,
+            Date().timeIntervalSince(weather.fetchedAt) < Self.cacheLifetime
+        {
+            return
+        }
+        weatherTask?.cancel()
+        isLoadingWeather = true
+        weatherError = nil
+        let requestedCity = city
+        weatherTask = Task {
+            do {
+                let snapshot = try await WeatherService.fetch(city: requestedCity)
+                guard !Task.isCancelled, city == requestedCity else { return }
+                weather = snapshot
+                Self.writeCache(snapshot, to: cacheURL)
+            } catch is CancellationError {
+                return
+            } catch {
+                guard city == requestedCity else { return }
+                weatherError = error.localizedDescription
             }
-            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
-
-        let selected = sources.filter { !hiddenCalendarIDs.contains($0.calendarIdentifier) }
-        guard !selected.isEmpty, let span = Self.span(from: Date()) else {
-            publish([])
-            return
+            guard city == requestedCity else { return }
+            isLoadingWeather = false
         }
-        // The predicate expands recurrence itself; fetching masters and rolling our own never works.
-        let predicate = store.predicateForEvents(
-            withStart: span.start, end: span.end, calendars: selected)
-        publish(store.events(matching: predicate).compactMap(Self.meeting(from:)))
     }
 
-    private func publish(_ next: [MeetingEvent]) {
-        guard next != events else { return }
-        events = next
-        onChange?()
-    }
-
-    /// Midnight today through midnight the day after tomorrow, in the Mac's own zone.
-    private static func span(from now: Date) -> (start: Date, end: Date)? {
-        let calendar = Calendar.current
-        guard let start = calendar.dateInterval(of: .day, for: now)?.start,
-            let end = calendar.date(byAdding: .day, value: 2, to: start)
+    private nonisolated static func readCache(from url: URL, city: String) -> WeatherSnapshot? {
+        guard let data = try? Data(contentsOf: url),
+            let snapshot = try? JSONDecoder().decode(WeatherSnapshot.self, from: data),
+            snapshot.city == city
         else { return nil }
-        return (start, end)
+        return snapshot
     }
 
-    private static func meeting(from event: EKEvent) -> MeetingEvent? {
-        // A cancelled event is not happening, so it never reaches a surface.
-        guard event.status != .canceled, let start = event.startDate, let end = event.endDate,
-            let calendar = event.calendar
-        else { return nil }
-        let declined =
-            event.attendees?
-            .first { $0.isCurrentUser }?.participantStatus == .declined
-        return MeetingEvent(
-            id: (event.eventIdentifier ?? event.calendarItemIdentifier)
-                + "|\(start.timeIntervalSinceReferenceDate)",
-            title: event.title ?? "(No Title)",
-            start: start,
-            end: end,
-            isAllDay: event.isAllDay,
-            isDeclined: declined,
-            calendarID: calendar.calendarIdentifier,
-            calendarName: calendar.title,
-            calendarItemID: event.calendarItemIdentifier,
-            link: MeetingLink.detect(fields: [
-                event.url?.absoluteString, event.location, event.notes
-            ]))
-    }
-
-    func event(id: String) -> MeetingEvent? {
-        events.first { $0.id == id }
-    }
-
-    /// Writes the draft to the calendar new events go to. False means there is no such calendar,
-    /// which is a report rather than a silent no-op.
-    func createEvent(_ draft: EventDraft, now: Date) -> Bool {
-        let store = eventStore ?? EKEventStore()
-        eventStore = store
-        guard access == .granted, let calendar = store.defaultCalendarForNewEvents else {
-            return false
-        }
-        let event = EKEvent(eventStore: store)
-        event.calendar = calendar
-        event.title = draft.trimmedTitle
-        event.startDate = draft.start(from: now)
-        event.endDate = draft.end(from: now)
-        guard (try? store.save(event, span: .thisEvent, commit: true)) != nil else { return false }
-        reload()
-        return true
-    }
-
-    // MARK: - Per-calendar switches
-
-    func isEnabled(_ calendar: MeetingCalendar) -> Bool {
-        !hiddenCalendarIDs.contains(calendar.id)
-    }
-
-    func setEnabled(_ enabled: Bool, for calendar: MeetingCalendar) {
-        if enabled {
-            hiddenCalendarIDs.remove(calendar.id)
-        } else {
-            hiddenCalendarIDs.insert(calendar.id)
-        }
-        defaults.set(Array(hiddenCalendarIDs), forKey: hiddenKey)
-        reload()
+    private nonisolated static func writeCache(_ snapshot: WeatherSnapshot, to url: URL) {
+        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        try? data.write(to: url, options: .atomic)
     }
 }

@@ -1,16 +1,21 @@
 # Signing
 
-Tinycast is signed with a **stable self-signed identity** called `Tinycast Self-Signed`. It's not an
-Apple Developer ID (there's no paid Apple account), but keeping the _same_ identity on every build is
-what makes macOS remember the Accessibility permission across rebuilds and updates — ad-hoc signing
-changes every build and macOS forgets the grant.
+Development and release signing are deliberately separate. Debug builds default to Xcode's **Sign to
+Run Locally** identity; `project.yml` never names a personal certificate or team. To keep a personal
+Apple Development choice across `xcodegen generate`, copy the local override template:
 
-You create this identity **once**. The same identity is used for:
+```sh
+cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig
+```
 
-- **local dev builds** — so Accessibility persists while you develop (the Xcode project signs with it), and
-- **CI releases** — exported into two GitHub secrets the release workflow imports.
+Fill in `DEVELOPMENT_TEAM` and leave the ignored file on that Mac. Command-line build settings still
+take precedence over it.
 
-## 1. Create the `Tinycast Self-Signed` identity (once)
+Official builds use a stable self-signed identity called `Tinycast Self-Signed`. It is not an Apple
+Developer ID, but keeping the same identity across releases lets the updater verify that a downloaded
+bundle has the same signer as the running app.
+
+## 1. Create the release identity (once)
 
 Run these in a terminal. They generate a self-signed code-signing certificate and import it into your
 login keychain:
@@ -41,7 +46,7 @@ Verify it's there:
 security find-identity -p codesigning | grep "Tinycast Self-Signed"
 ```
 
-Now local builds (Xcode, VS Code F5, `xcodebuild`) sign with it, and you grant Accessibility once.
+The local DMG script and release workflow explicitly request this identity. Normal Xcode builds do not.
 
 ## 2. Generate the CI secrets
 

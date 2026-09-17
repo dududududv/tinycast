@@ -10,9 +10,12 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     /// Our key window at summon time, so hiding hands focus back to Settings, not a stale app.
     private weak var previousOwnWindow: NSWindow?
     private var popToRootTimer: Timer?
+    private var preservedState: PaletteState.Snapshot?
     /// The session anchor — the panel's top-left, resolved once per show, the top edge being the
     /// one that must not drift. See docs/features/palette.md#window-placement.
     private var anchor: CGPoint?
+    private var resizeTarget: CGRect?
+    private var resizeGeneration = UUID()
     /// Live only between mouse-down and mouse-up on a drag handle; nil means a move was ours.
     private var drag: DragSession?
     private let dropGuides = PaletteDropGuideController()
@@ -31,6 +34,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     }
 
     var isVisible: Bool { panel?.isVisible ?? false }
+    var isKeyWindow: Bool { panel?.isKeyWindow ?? false }
 
     func show() {
         Signposts.interval("PaletteWindowController.show") {
@@ -49,16 +53,16 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             let panel = ensurePanel()
             // Open disarmed: a pointer already over a row must not highlight it.
             core.palette.disarmHoverHighlight(pointerAt: NSEvent.mouseLocation)
-            // Re-resolve the anchor now, then hold it so resizes never move the window.
-            anchor = nil
-            // Size and place before ordering front, so a compact summon never flashes.
-            positionPanel(panel, collapsed: core.paletteCoordinator.paletteIsCollapsed)
+            let wasVisible = panel.isVisible
+            if !wasVisible {
+                cancelResize()
+                anchor = nil
+            }
+            positionPanel(panel, collapsed: core.paletteCoordinator.paletteIsCollapsed, animated: wasVisible)
             // Flush first-mount layout off-screen, so the safe-area settle isn't visible.
             panel.contentView?.layoutSubtreeIfNeeded()
             core.inputSourceSwitcher.beginSession(
                 preferredInputSourceID: core.settings.autoSwitchInputSourceID)
-            // Events go stale while the palette is closed, and the countdown only ticks while up.
-            core.calendarCoordinator.paletteDidShow()
             // Non-activating, so summoning never raises our own aux windows behind it.
             panel.makeKeyAndOrderFront(nil)
             panel.orderFrontRegardless()
@@ -71,9 +75,10 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     }
 
     func hide(restoreFocus: Bool) {
+        if isVisible { preservedState = core.palette.snapshot() }
+        cancelResize()
         panel?.orderOut(nil)
         core.inputSourceSwitcher.endSession()
-        core.calendarCoordinator.paletteDidHide()
         // Drop the anchor, so the next summon re-resolves for the screen in use then.
         anchor = nil
         // The guides must never outlive the panel they point at.
@@ -94,11 +99,13 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     /// Pop to Root Search: reset now, or after the delay unless a reopen consumes it.
     private func schedulePopToRoot() {
+        popToRootTimer?.invalidate()
+        popToRootTimer = nil
         // Don't pop to root if an extension is waiting for OAuth authorization in the browser.
         guard !core.extensions.isAuthorizing else { return }
-        popToRootTimer?.invalidate()
         let timeout = core.settings.popToRootTimeout
         guard timeout != .immediately else {
+            preservedState = nil
             popToRoot()
             return
         }
@@ -107,6 +114,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             MainActor.assumeIsolated {
                 guard let self, !self.core.extensions.isAuthorizing else { return }
                 self.popToRootTimer = nil
+                self.preservedState = nil
                 self.popToRoot()
             }
         }
@@ -119,12 +127,12 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         core.aiChatCoordinator.popToRoot()
     }
 
-    /// True while a hidden palette still holds pre-close state; consuming cancels the reset.
-    func consumePreservedState() -> Bool {
-        guard let timer = popToRootTimer else { return false }
-        timer.invalidate()
+    /// Takes the hidden palette snapshot and cancels its pending reset.
+    func takePreservedState() -> PaletteState.Snapshot? {
+        popToRootTimer?.invalidate()
         popToRootTimer = nil
-        return true
+        defer { preservedState = nil }
+        return preservedState
     }
 
     /// Paste into the previous app while the palette stays frontmost.
@@ -144,7 +152,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     /// dialogs is none of those: hiding would pop to root, which tears down an extension command
     /// while its `confirmAlert` is still waiting for the answer.
     func windowDidResignKey(_ notification: Notification) {
-        guard isVisible, !core.isShowingDialog else { return }
+        guard isVisible, !isKeyWindow, !core.isShowingDialog else { return }
         core.paletteCoordinator.hidePalette(restoreFocus: false)
     }
 
@@ -163,7 +171,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     /// A drag re-anchors the session, so the next resize grows from where the user left it.
     func windowDidMove(_ notification: Notification) {
-        guard let panel else { return }
+        guard let panel, resizeTarget == nil else { return }
         let moved = CGPoint(x: panel.frame.minX, y: panel.frame.maxY)
         anchor = moved
         guard drag != nil else { return }
@@ -174,6 +182,8 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     /// A drag handle took the mouse down. Nothing shows yet — the guides wait for a real move.
     func beginDrag() {
+        cancelResize()
+        if let panel { anchor = CGPoint(x: panel.frame.minX, y: panel.frame.maxY) }
         guard let screen = panel?.screen ?? targetScreen() else { return }
         drag = DragSession(home: defaultAnchor(on: screen), screenFrame: screen.frame)
     }
@@ -239,7 +249,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             .environment(core.quicklinkArguments)
             .environment(core.extensions)
             .environment(core.calendarStore)
-            .environment(core.meetingClock)
+            .environment(core.ossUploadHistory)
         let panel = PalettePanel(rootView: root)
         panel.delegate = self
         panel.paletteState = core.palette
@@ -308,6 +318,10 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
                 self.core.paletteCoordinator.hidePalette()
                 return true
             case "v":
+                if self.core.palette.mode == .ossUpload {
+                    self.core.ossUploadCoordinator.uploadPasteboardFiles()
+                    return true
+                }
                 return self.core.palette.mode == .ai && self.core.aiChatCoordinator.attachPastedImage()
             default:
                 return false
@@ -320,16 +334,58 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     /// Resize to the given state, top edge anchored; applied even while hidden.
     func applyCollapsed(_ collapsed: Bool) {
         guard let panel else { return }
-        positionPanel(panel, collapsed: collapsed)
+        positionPanel(panel, collapsed: collapsed, animated: panel.isVisible)
     }
 
     /// Size to height and place against the session anchor, so the list grows downward.
-    private func positionPanel(_ panel: NSPanel, collapsed: Bool) {
+    private func positionPanel(_ panel: NSPanel, collapsed: Bool, animated: Bool = false) {
         guard let anchor = resolveAnchor() else { return }
-        let height = collapsed ? Theme.Size.compactHeight : Theme.Size.panelHeight
-        let frame = NSRect(
-            x: anchor.x, y: anchor.y - height, width: Theme.Size.panelWidth, height: height)
-        panel.setFrame(frame, display: true)
+        let expandedHeight: CGFloat
+        switch core.settings.componentHeight {
+        case .low: expandedHeight = Theme.Size.panelHeight
+        case .medium: expandedHeight = Theme.Size.panelMediumHeight
+        case .high: expandedHeight = Theme.Size.panelHighHeight
+        }
+        let componentHeight = core.palette.mode == .jsonEditor ? Theme.Size.panelMediumHeight : expandedHeight
+        let requestedHeight = collapsed ? Theme.Size.compactHeight : componentHeight
+        let visibleFrame = NSScreen.screens.first {
+            $0.visibleFrame.contains(CGPoint(x: anchor.x, y: anchor.y - 1))
+        }?.visibleFrame ?? targetScreen()?.visibleFrame
+        let frame = PalettePlacement.sizedFrame(
+            anchor: anchor, width: Theme.Size.panelWidth,
+            requestedHeight: requestedHeight, visibleFrame: visibleFrame)
+        let shouldAnimate = animated && drag == nil && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        if shouldAnimate, resizeTarget == frame { return }
+        guard shouldAnimate, panel.frame != frame else {
+            cancelResize()
+            panel.setFrame(frame, display: true)
+            return
+        }
+        let generation = UUID()
+        resizeGeneration = generation
+        resizeTarget = frame
+        self.anchor = CGPoint(x: frame.minX, y: frame.maxY)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = Theme.Duration.paletteResize
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.32, 0.72, 0, 1)
+            panel.animator().setFrame(frame, display: true)
+        } completionHandler: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, self.resizeGeneration == generation else { return }
+                self.resizeTarget = nil
+            }
+        }
+    }
+
+    private func cancelResize() {
+        guard let panel, resizeTarget != nil else { return }
+        resizeGeneration = UUID()
+        let frame = panel.frame
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0
+            panel.animator().setFrame(frame, display: true)
+        }
+        resizeTarget = nil
     }
 
     /// The display to anchor to; never `NSScreen.main`, which follows the focused window either way.

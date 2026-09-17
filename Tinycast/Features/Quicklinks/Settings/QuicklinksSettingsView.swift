@@ -52,8 +52,13 @@ struct QuicklinksSettingsView: View {
     private var storageNotice: some View {
         Section {
             Label(
-                "Quicklinks can't be saved: the database couldn't be opened, so nothing you change"
-                    + " here will stick. The existing file was left untouched.",
+                String(
+                    localized:
+                        """
+                        Quicklinks can't be saved: the database couldn't be opened, so nothing you \
+                        change here will stick. The existing file was left untouched.
+                        """
+                ),
                 systemImage: "exclamationmark.triangle.fill"
             )
             .foregroundStyle(.orange)
@@ -69,8 +74,8 @@ struct QuicklinksSettingsView: View {
             if results.isEmpty {
                 Text(
                     store.quicklinks.isEmpty
-                        ? "Add one to make it searchable from the launcher."
-                        : "No quicklink matches “\(query)”."
+                        ? String(localized: "Add one to make it searchable from the launcher.")
+                        : String(localized: "No quicklink matches “\(query)”.")
                 )
                 .foregroundStyle(.secondary)
             } else {
@@ -95,8 +100,13 @@ struct QuicklinksSettingsView: View {
             Toggle(isOn: $settings.quicklinkOpensNewWindow) {
                 Text("Open in a new window")
                 Text(
-                    "Ask the handler for a new window instead of reusing its frontmost tab. "
-                        + "Only apps that accept a new-window argument can honour this.")
+                    String(
+                        localized:
+                            """
+                            Ask the handler for a new window instead of reusing its frontmost tab. \
+                            Only apps that accept a new-window argument can honour this.
+                            """
+                    ))
             }
             Picker(selection: $settings.quicklinkSelectionFallback) {
                 ForEach(QuicklinkSelectionFallback.allCases) { option in

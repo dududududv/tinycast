@@ -45,6 +45,23 @@ struct PalettePlacementTests {
     }
 
     static func main() {
+        let compact = Theme.Size.compactHeight
+        let footer = Theme.Size.bottomBarHeight
+        for available: CGFloat in [-10, 0, 1, 20, footer, 200] {
+            let actual = PalettePlacement.footerHeight(
+                panelHeight: compact + available, compactHeight: compact, fullHeight: footer)
+            expect(actual, min(footer, max(0, available)), "footer fits the live expansion height")
+            expect(actual >= 0 && actual <= footer, "footer remains within its layout bounds")
+        }
+        let smallScreen = CGRect(x: 0, y: 40, width: 1000, height: 600)
+        let tall = PalettePlacement.sizedFrame(
+            anchor: CGPoint(x: 100, y: 500), width: width,
+            requestedHeight: Theme.Size.panelHighHeight, visibleFrame: smallScreen)
+        expect(tall.height == 600 && tall.minY == 40, "high panels fit above the Dock on small screens")
+        let medium = PalettePlacement.sizedFrame(
+            anchor: CGPoint(x: 100, y: 1000), width: width,
+            requestedHeight: Theme.Size.panelMediumHeight, visibleFrame: laptop)
+        expect(medium.height == 600 && medium.maxY == 1000, "fitting panels preserve the top anchor")
         theDefaultPlacement()
         restoringAcrossDisplays()
         restoringPartlyOffscreen()
@@ -153,6 +170,12 @@ struct PalettePlacementTests {
     // MARK: - The tokens these rules depend on
 
     static func tokenGrammar() {
+        expect(
+            Theme.Size.jsonEditorToolbar < Theme.Size.headerHeight,
+            "JSON's secondary toolbar stays shorter than the search header")
+        expect(
+            Theme.Size.barButtonHeight < Theme.Size.jsonEditorToolbar,
+            "JSON's compact action capsule has vertical breathing room")
         // Raise it past the bar's own height and no stored position is ever restorable again.
         expect(
             minimumVisible <= graspable.height,

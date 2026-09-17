@@ -11,12 +11,15 @@ struct JSONEditorView: View {
             JSONSourceEditor(
                 input: JSONEditorInput(
                     source: state.source, analysis: state.analysis, revision: state.revision),
+                wrapsLines: state.wrapsLines,
                 onSourceChange: editor.sourceDidChange,
                 onCursorChange: editor.cursorDidChange,
                 onReady: editor.editorReady,
-                onEscape: editor.dismiss)
+                onEscape: editor.dismiss
+            )
             .overlay(alignment: .topLeading) { placeholder }
             separator
+            issueDetails
             statusBar
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -43,14 +46,14 @@ struct JSONEditorView: View {
             if state.isWorking { ProgressView().controlSize(.small) }
             actionGroup
         }
-        .padding(.leading, Theme.Spacing.xl)
-        .padding(.trailing, Theme.Spacing.md)
+        .padding(.horizontal, Theme.Spacing.panelInset)
         .frame(height: Theme.Size.jsonEditorToolbar)
     }
 
     private var actionGroup: some View {
         HStack(spacing: 0) {
             action("folder", "Open", editor.openDocument)
+            action("magnifyingglass", "搜索 ⌘F", editor.showFind)
             action("square.and.arrow.down", "Save", editor.save, disabled: !state.isDirty)
             Rectangle()
                 .fill(Theme.Colors.separator)
@@ -61,7 +64,11 @@ struct JSONEditorView: View {
                 disabled: !state.analysis.validation.isValid, showsLabel: true)
             action(
                 "arrow.down.right.and.arrow.up.left", "Minify", editor.minify,
-                disabled: !state.analysis.validation.isValid)
+                disabled: !state.analysis.validation.isValid, showsLabel: true)
+            action("doc.on.doc", "Copy", editor.copy, disabled: state.source.isEmpty)
+            action(
+                "arrow.turn.down.left", state.wrapsLines ? "换行：开" : "换行：关",
+                state.toggleWrapping, showsLabel: true)
         }
         .padding(.horizontal, Theme.Spacing.xxs)
         .frosted(in: Capsule())
@@ -106,6 +113,10 @@ struct JSONEditorView: View {
     private var statusBar: some View {
         HStack(spacing: Theme.Spacing.md) {
             validationStatus
+            if state.byteCount > JSONEditorEngine.highlightLimit {
+                Text("大文本 · 已简化高亮")
+                    .help("保留编辑、格式化和校验，关闭全文语法着色以减少卡顿。")
+            }
             Spacer(minLength: Theme.Spacing.lg)
             Text(String(localized: "Line \(state.cursorLine), Column \(state.cursorColumn)"))
             Text(String(localized: "\(state.lineCount) lines"))
@@ -115,6 +126,27 @@ struct JSONEditorView: View {
         .foregroundStyle(Theme.Colors.textTertiary)
         .padding(.horizontal, Theme.Spacing.xl)
         .frame(height: Theme.Size.jsonEditorStatusBar)
+    }
+
+    @ViewBuilder
+    private var issueDetails: some View {
+        if case .invalid(let issue) = state.analysis.validation {
+            HStack(alignment: .top, spacing: Theme.Spacing.md) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(Theme.Colors.destructive)
+                Text(issue.message)
+                    .lineLimit(2)
+                    .help(issue.message)
+                    .textSelection(.enabled)
+                Spacer(minLength: Theme.Spacing.sm)
+                Button("定位错误", action: editor.jumpToIssue)
+                    .buttonStyle(.plain)
+            }
+            .font(.caption)
+            .foregroundStyle(Theme.Colors.textSecondary)
+            .padding(.horizontal, Theme.Spacing.xl)
+            .padding(.vertical, Theme.Spacing.sm)
+        }
     }
 
     private var validationStatus: some View {
@@ -138,8 +170,9 @@ struct JSONEditorView: View {
                         Text(
                             String(
                                 localized:
-                                    "Invalid JSON — line \(issue.line), column \(issue.column)"))
-                            .foregroundStyle(Theme.Colors.textSecondary)
+                                    "Invalid JSON — line \(issue.line), column \(issue.column)")
+                        )
+                        .foregroundStyle(Theme.Colors.textSecondary)
                     }
                 }
                 .buttonStyle(.plain)

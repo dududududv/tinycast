@@ -50,6 +50,7 @@ final class SettingsCoordinator {
             .environment(core.calendarStore)
             .environment(core.aiSettings)
             .environment(core.chatGPTSubscription)
+            .environment(core.ossSettings)
             // Propagates down so the window's materials show through, not each list's backing.
             .scrollContentBackground(.hidden)
     }

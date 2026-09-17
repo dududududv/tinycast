@@ -78,11 +78,13 @@ If a change touches anything in the right column, the harness on the left is man
 | `app-name-test` | `Platform/AppDisplayName.swift` — every path that names a scanned bundle |
 | `calc-test` | all of `Calculator/Model/` |
 | `json-editor-test` | `JSONEditor/Model/` — validation, formatting and syntax tokenization |
-| `calendar-test` | all of `Calendar/Model/` — link detection, the join window, the day buckets |
+| `calendar-test` | all of `Calendar/Model/` plus weather decoding — month grids, lunar dates, solar terms, holidays, almanac and forecast mapping |
 | `clipboard-test` | `Clipboard/Model/ClipboardStore.swift` |
 | `emoji-test` | `Emoji/Model/EmojiCatalog.swift`, `EmojiGridGeometry.swift`, the generated data |
 | `palette-selection-test` | `Features/PaletteRowIndex.swift` |
 | `palette-placement-test` | `DesignSystem/Theme.swift`, `Palette/PalettePlacement.swift` |
+| `palette-retention-test` | the palette's default, persisted override and selectable retention durations |
+| `localization-test` | the string catalog entries required by Settings and launcher feature surfaces |
 | `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `HyperKey.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
 | `callout-test` | `DesignSystem/Theme.swift`, `HotKeys/UI/CalloutPlacement.swift` |
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
@@ -93,6 +95,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `quicklink-test` | all four files in `Quicklinks/Model/` |
 | `snippets-test` | all of `Snippets/Model/` and `Snippets/Service/`, plus `Platform/HealthTicker.swift` |
 | `notes-test` | all of `Notes/Model/` and `Notes/Service/`, plus the real fuzzy matcher and signposts |
+| `oss-upload-test` | `OSSUpload/Model/` plus V4 URL signing — configuration validation, object keys, history filtering/expiry and a fixed signature fixture |
 | `notes-editor-test` | the literal Notes editor with real TextKit 2 and AppKit editing objects |
 | `raycast-test` | `Backup/Model/RaycastFormat.swift`, `RaycastV1Decoder.swift`, `Platform/Compression/Zlib.swift` |
 | `symbols-test` | `Extensions/Service/SymbolCatalog.swift`, against this machine's CoreGlyphs |
@@ -280,6 +283,27 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Pin, duplicate, delete and Open with Default all behave; import and export round-trip
 - Display order is pinned first by pin time, then by name
 
+### OSS upload
+
+- Settings rejects a non-HTTPS endpoint, an invalid region or bucket, and keeps the secret out of
+  `UserDefaults`; quitting and reopening preserves the non-secret settings and Keychain credentials
+- Updating only the AccessKey ID with the secret field blank preserves the stored secret; Remove asks
+  first and leaves uploads unavailable after confirmation
+- Choosing several small files uploads them in order, shows progress, and copies one link per line
+- Upload to OSS opens inside the palette; Command-V accepts copied Finder files, Choose Files accepts
+  multiple files, and successful uploads appear newest-first in searchable history
+- Return copies a current history link, Command-Return opens it, and expired signed links report that
+  they can no longer be used; delete and clear affect only local history
+- Signed links open before their selected expiry and stop authorizing afterwards; public URLs are
+  offered only as an explicit choice for a bucket whose read policy is already public
+- A partial batch copies every successful link and names the first failed file in Tinycast's dialog
+- A directory and a file larger than 5 GB are rejected locally without starting a network upload
+- Paste a screenshot with Command-V: it uploads as PNG without a temporary file; Finder files take precedence
+- Upload a large file: byte progress advances and 100% sent waits for the server response
+- Cancel a batch: confirmed successes remain in history, pending items can be retried, no object is deleted
+- Retry a partially failed batch: only unfinished items run, retaining the original destination and keys
+- Copy unrelated text while uploading: completion leaves it untouched and offers explicit link copying
+
 ### File Search
 
 - With File Search **off**: Search Files is absent, its shortcut no-ops, and no permission appears
@@ -368,41 +392,22 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Undo restores a Format or Minify operation, Find works, and CJK marked text remains exact
 - Hiding or leaving the palette preserves the draft; New or Open asks before discarding unsaved text
 
-### Calendar and meetings
+### Calendar
 
-- With Calendar **off**: no launcher entries, no card, no permission prompt at launch
-- Enabling shows the consent dialog **before** the macOS prompt; declining prompts for nothing
-- With a meeting four minutes out, an empty palette shows the card on top, provider glyph and all
-- The countdown steps on the minute boundary rather than on a keystroke
-- ↵ joins: a Zoom link opens the Zoom app, and the browser where no app claims the scheme
-- Typing a character swaps the card for the calculator's; ↑/↓ never lands on a phantom row
-- Unchecking a calendar drops its events from the launcher and My Schedule, and survives a relaunch
-- Adding or deleting an event in Calendar.app updates an open palette without a reopen
-- A meeting with no link is listed and searchable, and answers Open in Calendar rather than Join
-- Import a backup taken with Calendar on: it comes back **off**, and no calendar toggle travels
-- Menu bar on Never: the item is the plain icon; on 5 minutes the title and countdown appear at T-5
-  and step on the minute boundary, not on a keystroke
-- `Only show events with meetings` hides a linkless event and shows it again when unchecked
-- Hide Current Event on Automatically clears the entry at the start and hands the space to the next
-  event inside its lead time; on 5 minutes it lingers counting up, then clears
-- Clicking the menu bar item opens the menu with `Join <title>` on top — a bare click never joins
-- Camera Preview on: ↵ on the join card opens the panel **already showing live video** — no black
-  frame, no blank mid-preview; ↵ joins, Esc drops the join; the camera light goes out with the
-  panel, and the first run prompts once, before any panel appears
-- A meeting that ends leaves the launcher results and `My Schedule` on the same minute boundary it
-  leaves the menu bar, with the palette open or closed over the end
-- Auto Join on: the meeting opens itself at its start, **once** — dismiss it and it does not return.
-  With confirm on and camera preview off, the dialog asks first
-- Arming Auto Join during a meeting already under way joins nothing
-- Sleeping over a meeting's start and waking past it reloads the events; one still inside the window
-  joins, one long past does not
-- Create Event writes to the default calendar and shows up on the card, the schedule and the launcher
-  without a relaunch; a blank title leaves the dialog up on ↵ and on a click
-- Arrow keys move the caret in the New Event title field, and still step the Set Volume slider
-- Every row of Settings ▸ Calendar has Add Alias, Record Hotkey and a checkbox, and an alias set
-  there is the alias the Commands pane shows
-- Export with auto join and camera preview on, import onto a clean profile: both come back **off**,
-  while the menu-bar settings carry over
+- Calendar opens inside the existing palette with a Monday-first six-week grid and today's date selected
+- ←/→ moves one day, ↑/↓ moves one week, and crossing an edge opens the adjacent month
+- Entering `2026-02-17`, `2026/02/17`, `2-17`, `2/17`, `today` or `今天` selects the expected date
+- The selected detail shows the Gregorian weekday, lunar date, sexagenary day, twelve-day officer,
+  clash/direction and 宜/忌 folk reference
+- 17 February 2026 is lunar New Year and displays 壬戌; 5 April 2026 displays 清明
+- Official 2025–2026 holidays show `休`; adjusted weekend workdays show `班`
+- Pressing Return copies the selected Gregorian date and lunar label
+- Updating the city in Settings refreshes weather without an API key; a bad city reports an error and
+  does not discard an existing cached forecast
+- A forecast date shows conditions, low/high temperature and precipitation probability; a date beyond
+  the 16-day forecast remains a complete calendar detail without a weather row
+- The Calendar settings row's alias, hotkey and launcher visibility controls stay in sync with Commands
+- A clean launch asks for neither calendar nor camera permission, and Calendar.app is never modified
 
 ### System actions and window management
 

@@ -22,7 +22,19 @@ final class JSONEditorCoordinator {
 
     func editorReady(_ textView: JSONEditorTextView) {
         self.textView = textView
+        textView.onPasteText = { [weak self] text in self?.paste(text) }
         focusEditor()
+    }
+
+    private func paste(_ text: String) {
+        guard let textView else { return }
+        guard !state.isWorking else {
+            core.showMessage("正在处理 JSON，请稍后再粘贴", tone: .neutral)
+            return
+        }
+        let source = (state.source as NSString).replacingCharacters(in: textView.selectedRange(), with: text)
+        transform(
+            { _ in JSONEditorEngine.formatPastedSource(source) }, requiresValidSource: false)
     }
 
     func sourceDidChange(_ source: String) {
@@ -113,6 +125,9 @@ final class JSONEditorCoordinator {
         _ character: String, modifiers: NSEvent.ModifierFlags
     ) -> Bool {
         switch (character, modifiers) {
+        case ("f", [.command]): showFind()
+        case ("g", [.command]): find(.nextMatch)
+        case ("g", [.command, .shift]): find(.previousMatch)
         case ("n", [.command]): newDocument()
         case ("o", [.command]): openDocument()
         case ("s", [.command]): save()
@@ -122,6 +137,18 @@ final class JSONEditorCoordinator {
         default: return false
         }
         return true
+    }
+
+    func showFind() {
+        find(.showFindInterface)
+    }
+
+    private func find(_ action: NSTextFinder.Action) {
+        guard let textView else { return }
+        if action == .showFindInterface { textView.window?.makeFirstResponder(textView) }
+        let item = NSMenuItem()
+        item.tag = action.rawValue
+        textView.performTextFinderAction(item)
     }
 
     private func analyze(_ source: String, revision: Int, immediately: Bool = false) {
@@ -142,12 +169,16 @@ final class JSONEditorCoordinator {
         }
     }
 
-    private func transform(_ operation: @escaping @Sendable (String) throws -> String) {
-        guard state.analysis.validation.isValid else {
+    private func transform(
+        _ operation: @escaping @Sendable (String) throws -> String,
+        requiresValidSource: Bool = true
+    ) {
+        guard !requiresValidSource || state.analysis.validation.isValid else {
             jumpToIssue()
             return
         }
         let source = state.source
+        let revision = state.revision
         operationTask?.cancel()
         state.setWorking(true)
         operationTask = Task { [weak self] in
@@ -158,6 +189,10 @@ final class JSONEditorCoordinator {
                     try operation(source)
                 }.value
                 guard !Task.isCancelled else { return }
+                guard state.revision == revision else {
+                    core.showMessage("内容已修改，未应用旧的格式化结果")
+                    return
+                }
                 if let textView {
                     textView.replaceAll(with: transformed)
                 } else {

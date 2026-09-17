@@ -36,8 +36,58 @@ struct JSONEditorAnalysis: Equatable, Sendable {
 }
 
 enum JSONEditorEngine {
+    static let highlightLimit = 128_000
+
+    static func formatPastedSource(_ source: String) -> String {
+        (try? prettyPrinted(source)) ?? source
+    }
+
+    static func lineStarts(in source: String) -> [Int] {
+        var starts = [0]
+        for (offset, character) in source.utf16.enumerated() where character == 10 {
+            starts.append(offset + 1)
+        }
+        return starts
+    }
+
+    static func lineIndex(at offset: Int, starts: [Int]) -> Int {
+        var lower = 0
+        var upper = starts.count
+        while lower < upper {
+            let middle = (lower + upper) / 2
+            if starts[middle] <= offset { lower = middle + 1 } else { upper = middle }
+        }
+        return max(0, lower - 1)
+    }
+
+    static func isInsideString(_ prefix: String) -> Bool {
+        var quoted = false
+        var escaped = false
+        for character in prefix {
+            if escaped { escaped = false; continue }
+            if character == "\\", quoted { escaped = true } else if character == "\"" { quoted.toggle() }
+        }
+        return quoted
+    }
+
+    static func newline(in source: String, at offset: Int) -> (text: String, caret: Int) {
+        let source = source as NSString
+        let offset = min(max(offset, 0), source.length)
+        let prefix = source.substring(to: offset)
+        let line = prefix.components(separatedBy: "\n").last ?? ""
+        let indentation = String(line.prefix { $0 == " " || $0 == "\t" })
+        let opens = !isInsideString(prefix) && (prefix.last == "{" || prefix.last == "[")
+        let inner = indentation + (opens ? "  " : "")
+        let head = "\n" + inner
+        let next = offset < source.length ? source.substring(with: NSRange(location: offset, length: 1)) : ""
+        let closes = (prefix.last == "{" && next == "}") || (prefix.last == "[" && next == "]")
+        return (head + (opens && closes ? "\n" + indentation : ""), head.utf16.count)
+    }
+
     static func analyze(_ source: String) -> JSONEditorAnalysis {
-        JSONEditorAnalysis(validation: validate(source), tokens: syntaxTokens(in: source))
+        JSONEditorAnalysis(
+            validation: validate(source),
+            tokens: source.utf8.count <= highlightLimit ? syntaxTokens(in: source) : [])
     }
 
     static func validate(_ source: String) -> JSONValidation {
@@ -77,7 +127,8 @@ enum JSONEditorEngine {
             if character == quote {
                 let end = stringEnd(in: source, from: index)
                 let range = NSRange(location: index, length: end - index)
-                let kind: JSONSyntaxKind = nextNonWhitespace(in: source, after: end) == colon
+                let kind: JSONSyntaxKind =
+                    nextNonWhitespace(in: source, after: end) == colon
                     ? .key : .string
                 tokens.append(JSONSyntaxToken(kind: kind, range: range))
                 index = end
@@ -116,7 +167,8 @@ enum JSONEditorEngine {
     private static func issue(for error: Error, source: String) -> JSONIssue {
         if let issue = error as? JSONIssue { return issue }
         let error = error as NSError
-        let message = error.userInfo[NSDebugDescriptionErrorKey] as? String
+        let message =
+            error.userInfo[NSDebugDescriptionErrorKey] as? String
             ?? error.localizedDescription
         if let line = number(after: "line ", in: message),
             let column = number(after: "column ", in: message)
@@ -125,7 +177,8 @@ enum JSONEditorEngine {
                 message: message, line: line, column: column,
                 utf16Offset: utf16Offset(line: line, column: column, in: source))
         }
-        let byteOffset = (error.userInfo["NSJSONSerializationErrorIndex"] as? NSNumber)?.intValue
+        let byteOffset =
+            (error.userInfo["NSJSONSerializationErrorIndex"] as? NSNumber)?.intValue
             ?? number(after: "character ", in: message)
             ?? 0
         let position = position(atUTF8Offset: byteOffset, in: source)
@@ -162,7 +215,8 @@ enum JSONEditorEngine {
         return (
             line: lines.count,
             column: (lines.last?.count ?? 0) + 1,
-            utf16Offset: (prefix as NSString).length)
+            utf16Offset: (prefix as NSString).length
+        )
     }
 
     private static func stringEnd(in source: NSString, from start: Int) -> Int {

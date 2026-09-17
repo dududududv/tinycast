@@ -30,6 +30,7 @@ open with an `## Invariants` section; read it before changing anything in that a
 [emoji](features/emoji.md) ·
 [file search](features/file-search.md) ·
 [notes](features/notes.md) ·
+[OSS upload](features/oss-upload.md) ·
 [snippets](features/snippets.md) ·
 [quicklinks](features/quicklinks.md) ·
 [hotkeys](features/hotkeys.md) ·

@@ -130,6 +130,14 @@ struct GeneralSettingsView: View {
                     Text("Theme")
                     Text("Match macOS, or pin Tinycast to Light or Dark.")
                 }
+                Picker(selection: $settings.componentHeight) {
+                    ForEach(AppSettings.ComponentHeight.allCases) { height in
+                        Text(height.title).tag(height)
+                    }
+                } label: {
+                    Text("组件高度")
+                    Text("调整展开面板的高度，下次打开生效；JSON 固定中档，紧凑搜索框不受影响。")
+                }
                 Toggle(isOn: $settings.compactMode) {
                     Text("Compact mode")
                     Text(
@@ -171,8 +179,8 @@ struct GeneralSettingsView: View {
                         Text(timeout.title.localized).tag(timeout)
                     }
                 } label: {
-                    Text("Pop to Root Search")
-                    Text("Reset to the launcher this long after the window closes.")
+                    Text("Keep recent state")
+                    Text("Reopen the current screen and draft until this time has elapsed.")
                 }
                 // Empty only when TIS fails; one layout still lists, so the row does not come and go.
                 if !inputSources.isEmpty {

@@ -1,0 +1,6 @@
+// Development defaults to Xcode's local ad-hoc signature; releases override this on the command line.
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+
+// Keep personal signing choices outside the generated project and source control.
+#include? "Signing.local.xcconfig"

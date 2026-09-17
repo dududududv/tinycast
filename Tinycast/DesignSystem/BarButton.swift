@@ -23,6 +23,7 @@ struct BarButton<Label: View>: View {
     var chrome: BarButtonChrome = .capsule
     let action: () -> Void
     @ViewBuilder let label: Label
+    @Environment(\.isEnabled) private var isEnabled
     @State private var hovered = false
 
     var body: some View {
@@ -32,10 +33,24 @@ struct BarButton<Label: View>: View {
                 .padding(.horizontal, Theme.Spacing.md)
                 .frame(height: Theme.Size.barButtonHeight)
                 .contentShape(shape)
-                .background(shape.fill(hovered ? Theme.Colors.rowHover : Color.clear))
+                .background(shape.fill(hovered && isEnabled ? Theme.Colors.rowHover : Color.clear))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressStyle(shape: shape))
         .onHover { hovered = $0 }
+    }
+
+    private struct PressStyle: ButtonStyle {
+        let shape: AnyShape
+        @Environment(\.isEnabled) private var isEnabled
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        func makeBody(configuration: Configuration) -> some View {
+            let pressed = configuration.isPressed && isEnabled
+            configuration.label
+                .background(shape.fill(pressed ? Theme.Colors.selection : Color.clear))
+                .scaleEffect(pressed && !reduceMotion ? 0.97 : 1)
+                .animation(pressed ? nil : Theme.Motion.pressRelease, value: pressed)
+        }
     }
 }
 

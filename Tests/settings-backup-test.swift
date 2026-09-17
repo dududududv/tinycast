@@ -20,6 +20,7 @@ struct SettingsBackupTest {
         }
 
         let mirrored = SettingsBackupCoverage.mirrored
+        check("component height rides the settings backup", mirrored["componentHeight"] == .componentHeight)
         let excluded = SettingsBackupCoverage.deliberatelyExcluded
         let external = SettingsBackupCoverage.externallySourced
         let allKeys = AppSettingsKey.allCases.map(\.rawValue)

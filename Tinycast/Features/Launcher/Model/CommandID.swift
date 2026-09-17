@@ -8,11 +8,8 @@ enum CommandID: String, CaseIterable, Sendable {
     case searchEmoji = "command:search-emoji"
     case searchFiles = "command:search-files"
     case jsonEditor = "command:json-editor"
-    case joinNextMeeting = "command:join-next-meeting"
-    case copyMeetingLink = "command:copy-meeting-link"
-    case mySchedule = "command:my-schedule"
-    case openInCalendar = "command:open-in-calendar"
-    case createEvent = "command:create-event"
+    case uploadToOSS = "command:upload-to-oss"
+    case calendar = "command:calendar"
     case showNotes = "command:show-notes"
     case createNote = "command:create-note"
     case searchNotes = "command:search-notes"
@@ -37,11 +34,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .searchEmoji: return "Search Emoji & Symbols"
         case .searchFiles: return "Search Files"
         case .jsonEditor: return "JSON Editor"
-        case .joinNextMeeting: return "Join Next Meeting"
-        case .copyMeetingLink: return "Copy Meeting Link"
-        case .mySchedule: return "My Schedule"
-        case .openInCalendar: return "Open in Calendar"
-        case .createEvent: return "Create Event"
+        case .uploadToOSS: return "Upload to OSS"
+        case .calendar: return "Calendar"
         case .showNotes: return "Show Notes"
         case .createNote: return "Create Note"
         case .searchNotes: return "Search Notes"
@@ -68,11 +62,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .searchEmoji: return "face.smiling"
         case .searchFiles: return "doc.text.magnifyingglass"
         case .jsonEditor: return "curlybraces"
-        case .joinNextMeeting: return "video.fill"
-        case .copyMeetingLink: return "link"
-        case .mySchedule: return "calendar"
-        case .openInCalendar: return "calendar.badge.clock"
-        case .createEvent: return "calendar.badge.plus"
+        case .uploadToOSS: return "icloud.and.arrow.up"
+        case .calendar: return "calendar"
         case .showNotes: return "text.page"
         case .createNote: return "note.text.badge.plus"
         case .searchNotes: return "text.magnifyingglass"
@@ -100,9 +91,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .showNotes: return .showNotes
         case .createNote: return .createNote
         case .searchNotes: return .searchNotes
-        case .joinNextMeeting: return .joinNextMeeting
-        case .mySchedule: return .mySchedule
-        case .createEvent: return .createEvent
+        case .calendar: return .calendar
         case .aiChat: return .aiChat
         default: return nil
         }

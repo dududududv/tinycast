@@ -69,7 +69,7 @@ struct SnippetsSettingsView: View {
                         ? String(localized: "Loading snippets…")
                         : String(localized: "No snippets yet.")
                 )
-                    .foregroundStyle(.secondary)
+                .foregroundStyle(.secondary)
             } else {
                 ForEach(sortedSnippets) { record in
                     SnippetSettingsRow(
@@ -146,7 +146,8 @@ struct SnippetsSettingsView: View {
     private var snippetIssueTitle: String {
         let count = snippetsStore.issues.count
         return count == 1
-            ? "1 snippet file couldn’t be loaded" : "\(count) snippet files couldn’t be loaded"
+            ? String(localized: "1 snippet file couldn’t be loaded")
+            : String(localized: "\(count) snippet files couldn’t be loaded")
     }
 
     private var snippetIssueMessage: String {
@@ -236,7 +237,7 @@ private struct SnippetEditorSheet: View {
                 record == nil
                     ? String(localized: "Add Snippet") : String(localized: "Edit Snippet")
             )
-                .font(.title2.weight(.bold))
+            .font(.title2.weight(.bold))
 
             field(
                 title: "Name", placeholder: "Email Sign-off", text: $name,
@@ -355,10 +356,10 @@ private struct SnippetEditorSheet: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text(title.localized)
                 .font(.callout.weight(.medium))
-            TextField(placeholder, text: text)
+            TextField("", text: text, prompt: Text(placeholder.localized))
                 .textFieldStyle(.roundedBorder)
                 .accessibilityLabel("Snippet \(title.lowercased())")
-                .accessibilityHint(hint)
+                .accessibilityHint(hint.localized)
         }
     }
 

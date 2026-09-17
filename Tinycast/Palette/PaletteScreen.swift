@@ -43,6 +43,7 @@ enum PaletteAxis {
 
     var rows: [Row] { get }
     var primaryActionTitle: String { get }
+    func primaryActionTitle(at selection: Int) -> String
 
     /// False when the selection can't be acted on, which hides the footer pill and swallows ⌘K.
     func hasPrimaryAction(at selection: Int) -> Bool
@@ -69,6 +70,7 @@ enum PaletteAxis {
 }
 
 extension PaletteScreen {
+    func primaryActionTitle(at selection: Int) -> String { primaryActionTitle }
     func hasPrimaryAction(at selection: Int) -> Bool { true }
     func actions(at selection: Int) -> PopoverMenuContent? { nil }
     func menuContent(

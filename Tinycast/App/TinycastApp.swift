@@ -11,14 +11,8 @@ struct TinycastApp: App {
 
     var body: some Scene {
         MenuBarExtra(isInserted: $showInMenuBar) {
-            if let meeting = AppCore.shared.calendarCoordinator.menuBarEvent {
-                Button("Join \(meeting.title)") {
-                    AppCore.shared.calendarCoordinator.join(meeting)
-                }
-                Divider()
-            }
             Button("Open \(appName)") {
-                AppCore.shared.paletteCoordinator.showPalette(mode: .launcher)
+                AppCore.shared.paletteCoordinator.summonPalette()
             }
             Button("Clipboard History") {
                 AppCore.shared.paletteCoordinator.showPalette(mode: .clipboard)
@@ -32,7 +26,7 @@ struct TinycastApp: App {
             // No ⌘Q: the app menu binds it to Close Settings, and two contradictory ⌘Qs is a lie.
             Button("Quit \(appName)") { NSApp.terminate(nil) }
         } label: {
-            MenuBarLabel(appName: appName)
+            Label(appName, systemImage: "sparkle.magnifyingglass")
         }
         .commands { menuBarCommands }
     }

@@ -88,11 +88,6 @@ final class LauncherCoordinator {
             extensionCoordinator.runExtensionCommand(app, arguments: arguments)
             return
         }
-        if app.kind == .meeting {
-            guard let id = MeetingEvent.id(fromEntryID: app.id) else { return }
-            calendarCoordinator.activateMeeting(id: id)
-            return
-        }
         // Before the palette hides: an unfilled quicklink stays up to ask first.
         if app.kind == .quicklink {
             guard let id = Quicklink.id(fromEntryID: app.id) else { return }
@@ -111,7 +106,7 @@ final class LauncherCoordinator {
             let snippetID = String(app.id.dropFirst("snippet:".count))
             snippetExpansion.expandSnippet(id: snippetID, targetApp: previous)
         case .command, .customCommand, .systemAction, .windowCommand, .quicklink,
-            .extensionCommand, .meeting:
+            .extensionCommand:
             break  // handled above
         }
     }
@@ -130,16 +125,10 @@ final class LauncherCoordinator {
             fileSearchCoordinator.show()
         case .jsonEditor:
             jsonEditorCoordinator.show()
-        case .joinNextMeeting:
-            calendarCoordinator.joinNextMeeting()
-        case .copyMeetingLink:
-            calendarCoordinator.copyNextMeetingLink()
-        case .mySchedule:
-            calendarCoordinator.showSchedule()
-        case .openInCalendar:
-            calendarCoordinator.openNextMeetingInCalendar()
-        case .createEvent:
-            calendarCoordinator.createEvent()
+        case .uploadToOSS:
+            core.ossUploadCoordinator.showUpload()
+        case .calendar:
+            calendarCoordinator.showCalendar()
         case .showNotes:
             paletteCoordinator.hidePalette(restoreFocus: false)
             notesCoordinator.show()

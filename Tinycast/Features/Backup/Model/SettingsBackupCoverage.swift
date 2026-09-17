@@ -12,6 +12,7 @@ enum SettingsBackupCoverage {
         "emojiSkinTone": .emojiSkinTone,
         "popToRootSeconds": .popToRootTimeout,
         "appearance": .appearance,
+        "componentHeight": .componentHeight,
         "compactMode": .compactMode,
         "showFavoritesInCompactMode": .showFavoritesInCompactMode,
         "searchScopes": .searchScopes,
@@ -34,12 +35,6 @@ enum SettingsBackupCoverage {
         "quicklinkSelectionFallback": .quicklinkSelectionFallback,
         "quicklinkConfirmsBeforeDelete": .quicklinkConfirmsBeforeDelete,
         "extensionsShowInLauncher": .extensionsShowInLauncher,
-        "calendarShowInLauncher": .calendarShowInLauncher,
-        "joinWindowMinutes": .joinWindowMinutes,
-        "autoJoinConfirms": .autoJoinConfirms,
-        "menuBarEvents": .menuBarEvents,
-        "menuBarLinkedEventsOnly": .menuBarLinkedEventsOnly,
-        "hideCurrentEvent": .hideCurrentEvent,
         "supportReminders": .supportReminders
     ]
 
@@ -66,12 +61,6 @@ enum SettingsBackupCoverage {
             "Machine-local geometry: a point restored onto another display layout lands nowhere.",
         AppSettingsKey.autoSwitchInputSource.rawValue:
             "Names a keyboard input source installed on this Mac; another Mac may not have it.",
-        AppSettingsKey.calendarEnabled.rawValue:
-            "Doubles as consent to read your calendar; an import must not grant calendar access.",
-        AppSettingsKey.autoJoinMeetings.rawValue:
-            "Arms the app to open meeting links unattended; an import must not switch that on.",
-        AppSettingsKey.cameraPreview.rawValue:
-            "Turns the camera on before a meeting; an import must not grant that.",
         AppSettingsKey.aiEnabled.rawValue:
             "No other AI setting travels in a backup, so an import would arm a feature it cannot "
             + "configure.",

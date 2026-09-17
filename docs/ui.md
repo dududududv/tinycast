@@ -18,7 +18,7 @@ overlays**; there are no hard-edged bars, strips, or dividers. Rows don't clip u
 action pill, the menu circle, popover menus) are **Liquid Glass**.
 
 That paragraph describes **Dark**, which is the design. Light is the same design with the ink
-inverted: a white scrim over the same blur, and a black-alpha ramp at matched stops. Nothing about
+inverted: a 55% white scrim over the same blur, and a black-alpha ramp at matched stops. Nothing about
 geometry, type, motion or state changes between them.
 
 Five load-bearing ideas, in priority order:
@@ -49,7 +49,7 @@ These are the things that quietly break the look if changed. Preserve them unles
 - **Resolve every glyph through `SymbolImage`, not `Image(systemName:)`.** Some catalog symbols are bundled assets in `Assets.xcassets` (`toggleBluetooth`), and `Image(systemName:)` silently renders nothing for those.
 - **↵ runs the primary action, Escape cancels, and Cancel always renders leading** (the left button), matching macOS convention. A button never prints its key cap; hovering it shows a `Tooltip` instead, styled like the palette's own keycap chips.
 - **A transient readout is a HUD, not a dialog.** `VolumeHUDController`'s box is volume and mute only, since that one needs an actual level and number; every other success or info confirmation goes through `MessageHUDController`'s pill, whose trailing glyph *is* its `DialogTone`. A pill has no subject to name, so the icon rule above does not apply to it — and that mapping stays file-scoped so nothing can reach for it when building a `DialogRequest`. A new HUD means a new presenter, not a second shape bolted onto an existing controller.
-- **Glass is for controls; content takes the panel recipe.** `glassEffect` needs a backdrop to lens, so it only works *inside* a window that already has a `VisualEffectView` — the action capsule, the menu circle, `PopoverMenu`, a dialog's buttons. On a bare borderless panel it falls back to an opaque backing and shows as a dark edge. Both HUDs therefore use `panelScrim` → `VisualEffectView()` → `clipShape`, exactly like a dialog.
+- **Glass is for controls; content takes the panel recipe.** The palette, dialogs and HUDs use `panelScrim` → `VisualEffectView()` → `clipShape` to preserve text readability. Keep Liquid Glass on floating controls, not the full content surface.
 
 ---
 
@@ -86,7 +86,7 @@ Always `RoundedRectangle(cornerRadius:, style: .continuous)` — continuous corn
 
 ### Size (`Theme.Size`)
 
-`panelWidth 750` · `panelHeight 475` · `headerHeight 44` · `bottomBarHeight 52` · `barButtonHeight 28` ·
+`panelWidth 750` · expanded heights: low/default `475`, medium `600`, high `750` · `headerHeight 44` · `bottomBarHeight 52` · `barButtonHeight 28` ·
 `rowIcon 24` · `keyCap 18` · `recorderKeyCap 16` · `menuButton 36` · `clipboardListWidth 290` ·
 `menuWidth 276` · `clipboardFilterMenuWidth 200` · `menuIcon 20` ·
 `settingsSidebar 215` · `settingsRowIcon 20` · `dialogWidth 420` · `dialogIcon 32` · `hudWidth 200` ·
@@ -111,7 +111,7 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 
 | Token             | Dark           | Light          | Use                                              |
 | ----------------- | -------------- | -------------- | ------------------------------------------------ |
-| `panelScrim`      | black **0.40** | white **0.55** | the panel scrim over vibrancy                    |
+| `panelScrim`      | black **0.40** | white **0.55** | palette, notes, dialogs and HUD scrim over vibrancy |
 | `selection`       | white 0.10     | black 0.09     | selected row fill (keyboard/active selection)    |
 | `rowHover`        | white 0.05     | black 0.045    | mouse-hover fill (always fainter than selection) |
 | `menuHover`       | white 0.10     | black 0.09     | popover-menu row hover                           |
@@ -148,10 +148,16 @@ Source: `Palette/PalettePanel.swift`, `Palette/RootPaletteView.swift`.
 
 - **`PalettePanel`** is a borderless `NSPanel`: `isOpaque = false`, `backgroundColor = .clear`, `.floating` level, `hasShadow`, `animationBehavior = .none`. It hosts SwiftUI via `NSHostingView`. `PaletteWindowController` centers it slightly above screen center (`+8%`) and dismisses it on `windowDidResignKey`.
 - **The results layer fills the whole panel.** The header and bottom bar attach via `.safeAreaInset(edge: .top/.bottom)` as transparent overlays that float _over_ the list. The list underlaps them and dissolves at the edges.
+- **Visible height changes** use `Theme.Duration.paletteResize` (200 ms), with no whole-content scale or bounce. Initial summon stays instant; Reduce Motion disables the frame animation. Window resizing never replaces the editor or delays input.
+- **Expansion reserves the search bar first.** The footer inset is capped to the live panel height minus `compactHeight`, reaching its full 52 points only when space exists. Results may shrink to zero, and clipped footer controls cannot receive input. Geometry is observed without wrapping or remounting the search field.
 - **Header** (`headerHeight 44`): a back-chevron _or_ mode glyph, then the plain `TextField` (no border/background). Sub-screens (Clipboard, Calculator History) show the back chevron; the launcher shows a magnifying glass. The search icon aligns horizontally with row content.
 - **Compact keyboard entry:** pressing `↓` in the collapsed launcher expands the results and selects the first row without replacing or defocusing the shared search field.
-- **Bottom bar** (`bottomBarHeight 52`): a menu circle on the left, the action group on the right — both floating glass, no bar background. The action group is one glass `Capsule` holding the primary-action pill (label + `↵`) and the Actions toggle (`⌘K`).
-- **`BarButton`** is the shared bar control: bare label at rest, a `rowHover` capsule on hover, `barButtonHeight 28`. It carries the footer's two buttons and the clipboard header's type filter, so those hover identically. Hover state lives inside it, so sweeping one never re-renders the palette body.
+- **Launcher bottom bar** (`bottomBarHeight 52`): an About/Support menu circle on the left and the action group on the right. Settings is a direct gear button at the right of the launcher header, including compact mode. The action group is one glass `Capsule` holding the primary-action pill (label + `↵`) and the Actions toggle (`⌘K`).
+- **Plugin screens have no bottom bar.** Their action group sits at the right of the shared header; Actions opens below it from the top-right. Clipboard filtering and AI model selection remain in the header. The search field keeps its structural position and submit handler.
+- **Header alignment** uses `Theme.Spacing.panelInset` (16 points) on both sides. Header menus, the JSON document toolbar and calendar content share that right edge. Header action capsules are 36 points high inside 44-point rows. JSON deliberately retains its shorter 28-point capsule inside a 38-point secondary toolbar; aligned edges do not imply equal heights. Calendar content has 6-point vertical insets on both sides.
+- **Mode changes animate only content.** A `PaletteMode`-triggered keyframe offset settles from 6 points to zero over 180 ms. Content stays fully opaque and has no extra identity reset; there is no blank fade between screens. Reduce Motion disables the offset. Header/footer are outside the animation, and query, selection and document updates do not trigger it.
+- **`BarButton`** is the shared bar control: bare label at rest, a `rowHover` capsule on hover, `barButtonHeight 28`. Pressing adds a selection fill and scales to 0.97 immediately; release returns over 160 ms via `Theme.Motion.pressRelease`. Reduce Motion keeps only the fill feedback, and disabled buttons show neither hover nor pressed feedback. Native `Button` still owns activation and cancellation. Hover state lives inside it, so sweeping one never re-renders the palette body.
+- **Local state transitions** use `Theme.Motion.disclosure` (200 ms) and `Theme.Motion.feedback` (180 ms), with the strong ease-out curve `(0.23, 1, 0.32, 1)`. They are scoped to deliberate disclosure or task-stage changes, never search results, byte progress, or editor contents.
 
 ---
 
@@ -161,7 +167,7 @@ Source: `Features/Notes/UI/`.
 
 Notes is a sibling surface, not a palette mode. `NotesPanel` is a **titled**, resizable,
 non-activating panel — AppKit draws the traffic lights, the drag and the resize — but it keeps the
-palette's transparent recipe and deliberately does not dismiss on resign-key. `NotesView`'s root
+scrim-over-vibrancy recipe and deliberately does not dismiss on resign-key. `NotesView`'s root
 applies `panelScrim` → `VisualEffectView()` → one continuous **`panel`** corner clip, so
 Notes and the palette round identically. The clip is larger than the theme frame's own corner, so it
 is what shows; `invalidateShadow()` on every show recuts the shadow to match.
@@ -255,7 +261,8 @@ All lists share one row grammar so launcher and clipboard look identical:
 
 ### Section headers
 
-All six palette lists (App Launcher, Clipboard, Emoji, File Search, Calculator History, Uninstall) render category labels
+All seven palette lists (App Launcher, Clipboard, Emoji, File Search, Calculator History, OSS Upload,
+Uninstall) render category labels
 through one shared **`SectionHeader`** (`.subheadline.medium`, secondary — `Features/Launcher/UI/SectionHeader.swift`).
 The launcher shows a single "Results" header over search matches, and per-kind sections
 (Favorites / Applications / System Settings / Commands) for the empty query; clipboard/history use
@@ -275,7 +282,7 @@ Source: `Theme.frosted(in:)`, `DesignSystem/PopoverMenu.swift`.
 
 Glass is **only** for floating controls, never the main surface.
 
-- `View.frosted(in:)` = `glassEffect(.regular.interactive().tint(glassFrost), in:)` + `.tint(.clear)` — interactive lensing with a whitish frost tint (`glassFrost`) so the glass reads brighter than clear. Used on the action-group capsule, the menu circle, `PopoverMenu` and a dialog's buttons — always _inside_ a window that already has a `VisualEffectView` behind it. Neither HUD uses it: on a panel of its own, glass has no backdrop to lens and falls back to an opaque backing that reads as a dark edge, so both take the panel recipe instead (see "Dialogs & HUD"). Tune the frost amount via the `glassFrost` token, not per call site.
+- `View.frosted(in:)` = `glassEffect(.regular.interactive().tint(glassFrost), in:)` + `.tint(.clear)` — interactive lensing with a whitish frost tint (`glassFrost`). Used on floating controls inside the palette and on dialog buttons. The palette, dialogs and HUDs use scrim-over-vibrancy backgrounds. Tune the control frost via `glassFrost`, not per call site.
 - **Menus are in-window overlays, not system popovers.** `.contextMenu`/`NSMenu` stall clicks for seconds inside a `LazyVStack` and spill outside the panel. Use `PopoverMenu` anchored to a corner via `.overlay`, inset `menuInset` (8pt) so its own corner isn't clipped by the panel's. A menu hung off a control instead of a corner — the clipboard type filter, `.topTrailing` — insets by that control's own metrics so their edges line up.
 - **A menu's `width` is fixed, never intrinsic**, so it can't jitter as its rows change: `menuWidth 276` by default, or a token of its own where that reads too wide (`clipboardFilterMenuWidth 200`).
 - **`PopoverMenu`** uses `glassEffect(.regular, in: RoundedRectangle(menuPanel 16))` with **no hand-tuned shadow** — Tahoe glass carries its own elevation; adding a drop shadow reads heavy and non-native.
@@ -318,14 +325,9 @@ sole owner rule) and is the only presenter, so every confirmation in the app loo
   red-glyph security warning can carry a plain white button — "Import executable commands?" does,
   since importing a file destroys nothing — and running a shell command the user wrote themselves is
   `.neutral` + `.standard` rather than a red alarm.
-- **Surface.** A dialog reuses the palette's recipe `panelScrim` → `VisualEffectView()` →
-  `clipShape(RoundedRectangle(dialog 20))`, in that order at `dialogWidth 420`. Glass is reserved for
-  the buttons, matching the "glass only on floating controls" rule. The **volume HUD takes the same
-  recipe**, and so does the **message pill**. That is the line: glass needs a backdrop to lens, so it
-  only works _inside_ a window that already has a `VisualEffectView` behind it — the action capsule,
-  the menu circle, `PopoverMenu`, a dialog's buttons. On a bare borderless panel of its own it falls
-  back to an opaque backing that shows as a dark edge outside the shape, which is exactly what the
-  pill did before it moved to the recipe.
+- **Surface.** A dialog retains `panelScrim` → `VisualEffectView()` →
+  `clipShape(RoundedRectangle(dialog 20))`, in that order at `dialogWidth 420`. Its buttons use glass.
+  The **volume HUD** and **message pill** retain the same scrim-over-vibrancy recipe as the palette.
 - **Layout.** Leading glyph (`dialogIcon 32`), title (`.headline`) + wrapped secondary message,
   optional volume slider, then buttons at the trailing edge with **Cancel rendered leading** among
   them, matching macOS convention. `DialogView.visualOrder` reorders only the display;
@@ -411,7 +413,8 @@ Custom thin overlay scrollbar (the native one flashes and reserves a gutter insi
 style; `.thinScrollbar()` on the scroll view draws a hairline thumb (`Color.primary` alpha 0.30 rest →
 0.42 hover → 0.5 drag) that fattens on hover, with a faint rail revealed only while hovering/dragging.
 
-Routing: the palette lists (App Launcher, Clipboard history, Emoji, File Search, Calculator history) use
+Routing: the palette lists (App Launcher, Clipboard history, Emoji, File Search, Calculator history,
+OSS Upload) use
 `.thinScrollbar()` + `.hideNativeScrollers()`; the Clipboard preview (right pane) and every Settings
 pane take the native scroller as-is. Don't reintroduce native scrollers on the palette lists.
 
@@ -422,31 +425,13 @@ thick legacy scrollers the moment it sees a mouse — a scroll view is born over
 second later, which read as a thick bar flashing at the right edge of each pane. There is no
 per-scroll-view shim: chasing that flip after the fact is what caused the flash.
 
----
-
-## The camera preview panel
-
-`CameraPreviewPanel` is the third borderless surface, beside the dialog and the notes panel. It takes
-the same recipe — `panelScrim`, then `VisualEffectView`, then the clip — and the same optical lift a
-dialog takes, but sits at `.floating` rather than `.modalPanel` so a failure report still lands on
-top of it.
-
-`AVCaptureVideoPreviewLayer` is hosted in one `NSViewRepresentable` and nothing else; the title,
-countdown and buttons around it are Tinycast's own. Its buttons are a **deliberate copy** of
-`DialogButton` rather than a share: the dialog owns its button, and a preview that had to move with
-it would couple two unrelated surfaces.
-
 ## Dialog accessories
 
 A dialog carries at most one control beyond its buttons, and `DialogAccessory` makes that structural
-rather than a convention — `.volume` for the Set Volume prompt, `.eventDraft` for New Event. Two
-things follow from the enum:
+rather than a convention — currently `.volume` for the Set Volume prompt.
 
 - **Arrow keys belong to the accessory, not the panel.** `DialogPanel.handlesArrowKeys` is set from
-  `DialogAccessory.claimsArrowKeys`, so the slider still steps on ←/→ while the New Event title field
-  keeps its caret.
-- **An accessory can refuse its own primary action.** An invalid draft leaves the dialog up on ↵ and
-  on a click alike, which is what a greyed-out button would say if `DialogAction` could carry one.
+  `DialogAccessory.claimsArrowKeys`, so the slider still steps on ←/→.
 
 ## Settings
 

@@ -36,6 +36,9 @@ browser: JavaScriptCore ships with macOS, so that costs no extra binary size.
 - **Custom commands** — run named shell commands through fuzzy search or their own global hotkeys.
 - **Calculator** — do math, unit, live currency and crypto conversions inline, right in the palette.
 - **Clipboard history** — text and images, searchable, pasted back into the app you were using.
+- **Chinese calendar** — dates, lunar calendar, weekdays, almanac, official holiday arrangements
+  and weather in one read-only view.
+- **OSS upload** — upload one or more files to Alibaba Cloud OSS and copy signed or public links.
 - **Snippets** — reusable Markdown templates with dynamic placeholders, arguments, nested references
   and optional keyword expansion.
 - **Global hotkey** — one shortcut summons the palette from anywhere.

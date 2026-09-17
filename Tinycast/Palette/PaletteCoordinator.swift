@@ -34,11 +34,19 @@ final class PaletteCoordinator {
     }
 
     func togglePalette() {
-        if windowController.isVisible, palette.mode == .launcher {
+        if windowController.isVisible, windowController.isKeyWindow {
             hidePalette()
         } else {
-            showPalette(mode: .launcher, restoreAnyMode: true)
+            summonPalette()
         }
+    }
+
+    /// Generic summons reopen the screen hidden by click-away instead of requesting a fresh mode.
+    func summonPalette() {
+        if let preserved = windowController.takePreservedState() {
+            palette.restore(preserved)
+        }
+        presentPalette()
     }
 
     func toggleClipboard() {
@@ -59,10 +67,16 @@ final class PaletteCoordinator {
 
     /// Shows the palette, honoring Pop to Root Search. See docs/features/palette.md#state-flow.
     func showPalette(mode: PaletteMode, restoreAnyMode: Bool = false) {
-        let preserved = windowController.consumePreservedState()
-        if !(preserved && (restoreAnyMode || palette.mode == mode)) {
+        let preserved = windowController.takePreservedState()
+        if let preserved, restoreAnyMode || preserved.mode == mode {
+            palette.restore(preserved)
+        } else if !(windowController.isVisible && (restoreAnyMode || palette.mode == mode)) {
             palette.prepare(mode: mode)
         }
+        presentPalette()
+    }
+
+    private func presentPalette() {
         windowController.show()
         if palette.mode == .fileSearch { fileSearch.search(palette.query) }
         // Re-scan on open so an app uninstalled since the last scan drops out of the launcher.

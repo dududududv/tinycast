@@ -50,8 +50,9 @@ but the guarantee that every decode runs through the initializer that masks devi
 export → import within one build is guaranteed to round-trip.
 
 `hotkey.searchFiles`, `hotkey.toggleClipboard`, `hotkey.toggleEmoji`, `hotkey.showNotes`,
-`hotkey.createNote`, `hotkey.searchNotes`, `hotkey.joinNextMeeting`, `hotkey.mySchedule` and
-`hotkey.createEvent` are the built-in launcher commands with an action of their own, alongside `hotkey.togglePalette`, which has no command row. They are the only `CommandID`s whose
+`hotkey.createNote`, `hotkey.searchNotes` and `hotkey.calendar` are the built-in launcher commands
+with an action of their own, alongside `hotkey.togglePalette`, which has no command row. They are the
+only `CommandID`s whose
 `hotKeyAction` is non-nil — which is what puts a recorder on their rows in Settings ▸ Commands, and a
 keycap on their launcher rows. Each is also reachable from its own feature pane, so it is one binding
 from two places, not two settings. `HotKeyManager` names them all through `CommandID`, so a conflict
