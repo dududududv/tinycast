@@ -18,15 +18,14 @@ struct TinycastApp: App {
                 AppCore.shared.paletteCoordinator.showPalette(mode: .clipboard)
             }
             Divider()
-            Button("Check for Updates...") { AppCore.shared.updateCoordinator.checkForUpdates() }
-            Button("Support \(appName)...") { AppCore.shared.supportCoordinator.showSupport() }
             Button("Settings...") { AppCore.shared.settingsCoordinator.showSettings() }
                 .keyboardShortcut(",")
             Divider()
             // No ⌘Q: the app menu binds it to Close Settings, and two contradictory ⌘Qs is a lie.
             Button("Quit \(appName)") { NSApp.terminate(nil) }
         } label: {
-            Label(appName, systemImage: "sparkle.magnifyingglass")
+            Label(appName, systemImage: "bolt.fill")
+                .symbolRenderingMode(.monochrome)
         }
         .commands { menuBarCommands }
     }
@@ -34,10 +33,7 @@ struct TinycastApp: App {
     /// Declared, not assigned to `NSApp.mainMenu`: SwiftUI rebuilds the menu on any scene change.
     @CommandsBuilder
     private var menuBarCommands: some Commands {
-        CommandGroup(replacing: .appInfo) {
-            Button("About \(appName)") { AppCore.shared.settingsCoordinator.showAbout() }
-            Button("Check for Updates…") { AppCore.shared.updateCoordinator.checkForUpdates() }
-        }
+        CommandGroup(replacing: .appInfo) {}
         CommandGroup(replacing: .appSettings) {
             Button("Settings…") { AppCore.shared.settingsCoordinator.showSettings() }
                 .keyboardShortcut(",")

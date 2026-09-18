@@ -63,6 +63,7 @@ struct PalettePlacementTests {
             requestedHeight: Theme.Size.panelMediumHeight, visibleFrame: laptop)
         expect(medium.height == 600 && medium.maxY == 1000, "fitting panels preserve the top anchor")
         theDefaultPlacement()
+        clipboardPlacement()
         restoringAcrossDisplays()
         restoringPartlyOffscreen()
         snapping()
@@ -73,6 +74,21 @@ struct PalettePlacementTests {
     }
 
     // MARK: - The untouched placement
+
+    static func clipboardPlacement() {
+        for screen in [laptop, external, CGRect(x: -900, y: 0, width: 900, height: 700)] {
+            let frame = PalettePlacement.clipboardFrame(screenFrame: screen)
+            expect(frame.width == screen.width, "clipboard occupies 100 percent of the display width")
+            expect(frame.minX == screen.minX && frame.maxX == screen.maxX, "clipboard is edge to edge")
+            expect(frame.minY == screen.minY, "clipboard rests at the screen bottom")
+            expect(frame.height == Theme.Size.clipboardPanelHeight, "clipboard has its own short height")
+            expect(frame.midX, screen.midX, "clipboard is centered on its own display")
+            let restored = PalettePlacement.sizedFrame(
+                anchor: CGPoint(x: frame.midX - width / 2, y: frame.maxY), width: width,
+                requestedHeight: Theme.Size.panelMediumHeight, visibleFrame: screen)
+            expect(restored.width == width, "leaving clipboard restores normal plugin width")
+        }
+    }
 
     static func theDefaultPlacement() {
         let anchor = home(laptop)

@@ -60,6 +60,7 @@ final class JSONEditorTextView: NSTextView {
     }
 
     override func cancelOperation(_ sender: Any?) {
+        guard !hasMarkedText() else { super.cancelOperation(sender); return }
         if let scrollView = enclosingScrollView, scrollView.isFindBarVisible {
             scrollView.isFindBarVisible = false
             window?.makeFirstResponder(self)

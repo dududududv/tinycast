@@ -117,11 +117,24 @@ run appearance-test        Tinycast/Platform/Appearance.swift \
                            Tinycast/DesignSystem/Theme.swift \
                            Tinycast/Features/Settings/AppAppearance.swift
 run localization-test
+run input-method-test Tinycast/Platform/InputMethodMonitor.swift \
+                      Tinycast/Features/Notes/UI/NotesPanel.swift
 run palette-retention-test Tinycast/Features/Settings/Model/PopToRootTimeout.swift \
                            Tinycast/Palette/PaletteCoordinator.swift
 run palette-placement-test Tinycast/Platform/Appearance.swift \
                            Tinycast/DesignSystem/Theme.swift \
                            Tinycast/Palette/PalettePlacement.swift
+run clipboard-presentation-test Tinycast/Platform/Appearance.swift \
+                           Tinycast/DesignSystem/Theme.swift \
+                           Tinycast/Platform/NotificationToken.swift \
+                           Tinycast/Palette/PalettePanel.swift \
+                           Tinycast/Palette/PalettePlacement.swift \
+                           Tinycast/Palette/PaletteState.swift \
+                           Tinycast/Palette/PaletteMode.swift \
+                           Tinycast/Palette/HoverArming.swift \
+                           Tinycast/Features/Clipboard/Model/ClipboardStore.swift \
+                           Tinycast/Features/Clipboard/Model/ClipboardFilter.swift \
+                           Tinycast/Features/Quicklinks/Model/Quicklink.swift
 run scroll-reveal-test     Tinycast/DesignSystem/Scrolling/SelectionReveal.swift
 run redaction-test         Tinycast/DesignSystem/RedactedPlaceholder.swift
 run ai-instructions-test   Tinycast/Features/AI/Model/AIInstructions.swift \

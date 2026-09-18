@@ -1,5 +1,9 @@
 # Support
 
+This feature is removed from the app: no donation links, window, startup reminder or periodic task
+is wired into `AppCore`. The model/service sources and stored preference remain unused. The
+description below is an archived reference, not current application behavior.
+
 One window, one checkout link, and a checkbox deciding whether it may ever reopen itself. Every other
 surface — the website's hero and footer, the docs sidebar, the README badge — is a bare link to the
 same URL, so `SupportCoordinator.checkout` is the only place the destination is written down.

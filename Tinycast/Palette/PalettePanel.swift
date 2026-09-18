@@ -4,6 +4,50 @@ import SwiftUI
 
 /// Borderless floating panel that hosts the SwiftUI command palette.
 final class PalettePanel: NSPanel {
+    private var clipboardViewport: NSView?
+    private static let clipboardEntranceKey = "clipboardEntrance"
+
+    func takeHostedContent() -> NSView? {
+        cancelClipboardEntrance()
+        let hosted = clipboardViewport?.subviews.first ?? contentView
+        hosted?.removeFromSuperview()
+        contentView = nil
+        clipboardViewport = nil
+        return hosted
+    }
+
+    func setHostedContent(_ hosted: NSView?, bottomDocked: Bool) {
+        guard let hosted else { return }
+        hasShadow = !bottomDocked
+        guard bottomDocked else {
+            contentView = hosted
+            return
+        }
+        let viewport = NSView(frame: CGRect(origin: .zero, size: frame.size))
+        viewport.wantsLayer = true
+        viewport.clipsToBounds = true
+        viewport.layer?.masksToBounds = true
+        contentView = viewport
+        hosted.frame = viewport.bounds
+        hosted.autoresizingMask = [.width, .height]
+        viewport.addSubview(hosted)
+        clipboardViewport = viewport
+    }
+
+    func animateClipboardEntrance() {
+        guard let viewport = clipboardViewport, let layer = viewport.layer else { return }
+        let animation = CABasicAnimation(keyPath: "sublayerTransform.translation.y")
+        animation.fromValue = -viewport.bounds.height
+        animation.toValue = 0
+        animation.duration = Theme.Duration.paletteResize
+        animation.timingFunction = CAMediaTimingFunction(controlPoints: 0.32, 0.72, 0, 1)
+        layer.add(animation, forKey: Self.clipboardEntranceKey)
+    }
+
+    func cancelClipboardEntrance() {
+        clipboardViewport?.layer?.removeAnimation(forKey: Self.clipboardEntranceKey)
+    }
+
     /// Bare backspace, which the field editor swallows before `onKeyPress` could see it.
     var onBareBackspace: (() -> Bool)?
     /// Command chords the field editor swallows, plus the ones no main menu handles.
@@ -137,6 +181,12 @@ final class PalettePanel: NSPanel {
         default: break
         }
         defer { applyCursorPolicy(for: event) }
+        if event.type == .keyDown, !event.modifierFlags.contains(.command),
+            let editor = fieldEditor, editor.hasMarkedText()
+        {
+            editor.keyDown(with: event)
+            return
+        }
         // Before every other rule, so the arrows' own policies apply to the chords too.
         if event.type == .keyDown, let arrow = Self.emacsArrow(for: event) {
             sendEvent(arrow)
@@ -153,6 +203,7 @@ final class PalettePanel: NSPanel {
         if event.type == .keyDown,
             Int(event.keyCode) == kVK_Delete,
             event.modifierFlags.isDisjoint(with: [.command, .option, .control, .shift]),
+            isSearchFieldEditor,
             onBareBackspace?() == true
         {
             return
@@ -165,6 +216,13 @@ final class PalettePanel: NSPanel {
             return
         }
         super.sendEvent(event)
+    }
+
+    private var isSearchFieldEditor: Bool {
+        guard let editor = fieldEditor, editor.isFieldEditor, editor.string.isEmpty
+        else { return false }
+        let editorFrame = editor.convert(editor.bounds, to: nil)
+        return searchFieldRect.contains(CGPoint(x: editorFrame.midX, y: editorFrame.midY))
     }
     init<Content: View>(rootView: Content) {
         super.init(

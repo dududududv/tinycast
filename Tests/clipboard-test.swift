@@ -234,9 +234,13 @@ struct ClipboardTests {
             expect(texts(store, filter: .image).isEmpty, "no images were captured")
 
             store.togglePinned(item(store, "https://apple.com"))
+            expect(texts(store, filter: .pinned) == ["https://apple.com"], "favorites only includes pins")
+            expect(store.search("missing", filter: .pinned).isEmpty, "favorites respects the query")
             expect(
                 texts(store, filter: .link) == ["https://apple.com", "second.link.dev"],
                 "a pinned link leads its filtered block")
+            store.togglePinned(item(store, "https://apple.com"))
+            expect(texts(store, filter: .pinned).isEmpty, "unpinning removes a favorite immediately")
         }
     }
 

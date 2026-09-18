@@ -26,7 +26,6 @@ struct SettingsDetailView: View {
             case .extensions: ExtensionsSettingsView()
             case .permissions: PermissionsSettingsView()
             case .backup: BackupSettingsView()
-            case .about: AboutView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

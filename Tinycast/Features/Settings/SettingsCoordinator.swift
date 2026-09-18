@@ -55,10 +55,6 @@ final class SettingsCoordinator {
             .scrollContentBackground(.hidden)
     }
 
-    func showAbout() {
-        showSettings(tab: .about)
-    }
-
     func showBackupSettings() {
         showSettings(tab: .backup)
     }

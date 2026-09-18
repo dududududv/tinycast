@@ -33,7 +33,7 @@ Independently of the folder tree, every mature subsystem has converged on the sa
 │ SystemActionRunner · QuicklinkLauncher · SnippetTextInjector ·             │
 │ SnippetKeywordListener · NotesRepository · CurrencyRateStore · Paster ·    │
 │ HotKeyCenter · HyperKeyTap · DoubleTapMonitor · RunningAppsMonitor ·       │
-│ CalendarStore · WeatherService · SupportReminderStore                      │
+│ CalendarStore · WeatherService                                             │
 └──────────────────────────────────┬─────────────────────────────────────────┘
                                    │ published through
 ┌─ OBSERVABLE STATE ───────────────▼─────────────────────────────────────────┐
@@ -104,7 +104,10 @@ imperatively from AppKit.
 
 - **Command palette** — a borderless floating `NSPanel` (`Palette/PalettePanel.swift`) hosting SwiftUI
   via `NSHostingView`, managed by `PaletteWindowController`. It toggles between a compact bar and the
-  full launcher by resizing the window. The controller **solely** owns the frame, resolved once per show
+  full launcher by resizing the window. Clipboard has a separate bottom-docked, full-width panel;
+  each owns a separate hosting tree and search state, never widening the search panel. Clipboard
+  uses `ClipboardPanelView` and `AppCore.clipboardPalette`, without launcher Backspace/Tab handlers.
+  The controller **solely** owns the frame, resolved once per show
   to a top-left anchor so it grows downward, and the hosting view sets `sizingOptions = []` so SwiftUI
   never drives the window size — without that the hosting view resizes the panel to fit content and the
   top edge drifts on the compact↔expanded swap. The panel auto-dismisses on `windowDidResignKey`.
@@ -128,10 +131,8 @@ imperatively from AppKit.
   confirmations, failure reports and value prompts. Presentation is `async`, so nothing blocks the main
   actor, and the presenter refuses a second dialog while one is up — that, not a flag, is what stops a
   held hotkey stacking dialogs.
-- **Support** — a titled `AppWindowController` window owned by `SupportCoordinator`, sized to the
-  height its content measured. Every route into it — the palette's menu circle, Settings → About, the
-  menu bar, the launcher, and the 30-day reminder — lands on `showSupport()`, which is what moves the
-  reminder's anchor. See [features/support.md](features/support.md).
+- **About, updates and support** have no app surfaces or commands. `AppCore` does not instantiate
+  update checks or support reminders; their remaining model/service sources are inactive.
 - **HUDs** are separate, because a dialog asks and a HUD reports: `MessageHUDController` (the pill) and
   `VolumeHUDController` (the level box), both over a shared `HUDPresenter` that owns the
   one-at-a-time, auto-dismiss and fade policy. See [ui.md](ui.md#dialogs--hud).
@@ -195,7 +196,7 @@ Tinycast/
   Resources/        RaycastRuntime.generated.js, the embedded extension runtime
   Palette/          the palette shell: PalettePanel, PaletteWindowController, RootPaletteView,
                     the PaletteScreen protocol, PaletteCoordinator, PaletteState, PaletteMode
-  Windows/          the non-palette AppKit surfaces: AppWindowController, Dialog/, HUD/, About/
+  Windows/          the non-palette AppKit surfaces: AppWindowController, Dialog/, HUD/
   Assets.xcassets/  the app icon and the bundled image sets some catalog symbols resolve to
   Features/
     PaletteRowIndex.swift   the flat selection index — palette-owned, so it sits at the top

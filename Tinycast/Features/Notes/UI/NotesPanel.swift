@@ -49,6 +49,12 @@ final class NotesPanel: NSPanel {
     }
 
     override func sendEvent(_ event: NSEvent) {
+        if event.type == .keyDown, !event.modifierFlags.contains(.command),
+            let editor = firstResponder as? NSTextView, editor.hasMarkedText()
+        {
+            editor.keyDown(with: event)
+            return
+        }
         // The search and rename fields own Escape while they are editing.
         guard event.type == .keyDown, Int(event.keyCode) == kVK_Escape, !event.isARepeat,
             (firstResponder as? NSTextView)?.isFieldEditor != true

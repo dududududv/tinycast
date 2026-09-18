@@ -1,5 +1,9 @@
 # Updates
 
+This feature is removed from the app: no update command, window, startup check or periodic task is
+wired into `AppCore`. The model/service sources and tests remain uninstantiated. The description
+below is an archived reference for those sources, not current application behavior.
+
 Tinycast checks GitHub Releases once a day, offers the newest release for its own channel in a native
 window with its release notes, installs it and relaunches. There is no Sparkle and no appcast: the
 release feed the website already reads is the feed the app reads.

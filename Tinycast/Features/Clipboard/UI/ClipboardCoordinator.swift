@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 
 /// Owns clipboard-history actions: paste, copy, reveal, pin — and the selection that follows.
 @MainActor
@@ -28,6 +29,32 @@ final class ClipboardCoordinator {
     func applyRetention(_ retention: ClipboardRetention) {
         clipboardStore.maxAge = retention.maxAge
         clipboardStore.enforceLimits()
+    }
+
+    func handleCommandShortcut(_ event: NSEvent) -> Bool {
+        guard !event.isARepeat,
+            event.modifierFlags.intersection([.command, .option, .control, .shift]) == .command
+        else { return false }
+        if let index = FavoriteSlots.index(forKeyCode: event.keyCode) {
+            palette.noteFavoriteSlot(index)
+            return true
+        }
+        if Int(event.keyCode) == kVK_Escape {
+            paletteCoordinator.hidePalette()
+            return true
+        }
+        if Int(event.keyCode) == kVK_Delete {
+            let rows = clipboardStore.search(palette.query, filter: palette.clipboardFilter)
+            if rows.indices.contains(palette.selection) { clipboardStore.remove(rows[palette.selection]) }
+            return true
+        }
+        switch event.charactersIgnoringModifiers?.lowercased() {
+        case ".": palette.notePinChord()
+        case "w": paletteCoordinator.hidePalette()
+        case ",": core.settingsCoordinator.showSettings()
+        default: return false
+        }
+        return true
     }
 
     func paste(_ item: ClipboardItem) {

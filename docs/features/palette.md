@@ -79,7 +79,7 @@ palette indexes into it. Adding a mode means adding a conformer, not a branch in
 | Mode | Screen | Inner list |
 | --- | --- | --- |
 | `.launcher` | `LauncherScreen` | `LauncherList` |
-| `.clipboard` | `ClipboardScreen` | `ClipboardList` + preview |
+| `.clipboard` | `ClipboardScreen` | horizontal `ClipboardList` cards |
 | `.calculatorHistory` | `CalculatorHistoryScreen` | `CalculatorHistoryList` |
 | `.emoji` | `EmojiScreen` | `EmojiGridView` |
 | `.fileSearch` | `FileSearchScreen` | `FileSearchList` (see [file-search.md](file-search.md)) |
@@ -147,11 +147,25 @@ match the visible row order**, including the card at index 0 when present — th
 `PaletteWindowController` resolves an anchor (left edge + top edge) **once per summon** and reuses it
 for every compact↔expanded resize, keeping the top edge fixed when the requested height fits. The
 anchor is dropped on hide, so the next summon re-resolves for wherever the user is then.
+Clipboard is a separate `PalettePanel`, owned alongside the search panel by `PaletteWindowController`.
+Each owns a separate hosting view and `PaletteState`; clipboard uses `ClipboardPanelView` and
+`AppCore.clipboardPalette`, not the launcher's root view or keyboard handlers. Switching hides the
+outgoing window and focuses the destination without moving either content tree. Generic activation
+always targets the search panel; clipboard activation never changes the main mode or consumes its
+saved snapshot. Each window has its own reset timer using the configured retention duration. A switch guard
+prevents the outgoing resign-key notification from dismissing the
+incoming window. The clipboard's frame is independent of the search anchor: full screen width,
+bottom-aligned, 360 points high. Its screen frame is captured once per summon, not per resize notification.
+The window is placed at that final frame before ordering front; a clipped AppKit viewport animates only
+the content's layer translation over 200 ms. The system window never travels below or between displays.
+Reduce Motion skips the content animation. Dismissal
+remains immediate so paste and focus restoration never wait for an exit animation. Hiding removes
+the layer animation synchronously, with no deferred show/hide completion.
 
 Settings → General → Appearance offers component heights Low (475), Medium (600), and High (750).
 Low preserves the original default. The setting is persisted and backed up, and applies on the next
 summon. JSON Editor uses the medium height (600) regardless of the global choice; switching modes
-reapplies the appropriate height. Other components follow the global setting. The
+reapplies the appropriate height. Clipboard uses its independent full-width bottom panel rather than resizing this window. Other components follow the global setting. The
 compact mode keeps its existing height. Expanded panels are capped to the display's usable
 height and shifted upward only when needed to keep the bottom above the Dock.
 
@@ -251,6 +265,15 @@ explicit `accessibilityLabel` because the prompt used to supply it.
 This is the same class of bug as the freeze below — both come from the cell/field-editor swap.
 
 ### IME composition
+
+`AppCore` owns `InputMethodMonitor`, a local key-event monitor covering every app window and sheet.
+While the focused native text view has marked text, non-Command keys go to its input context first.
+An event consumed by the IME is not dispatched again, even if confirming the candidate cleared the
+marked range during that call. Native submission and search binding updates remain in charge after
+commit; Command shortcuts and keys outside composition retain their existing paths.
+Palette and Notes panels route remaining composition keys directly to the native editor rather than
+their custom navigation. Empty Backspace navigation additionally requires the empty search field's
+actual editor, not merely an empty shared query while a different field has focus.
 
 A hand-drawn placeholder has one cost the real prompt does not. An IME composes into the field
 editor's own storage, so the bound `query` stays empty for the whole romanisation and the placeholder

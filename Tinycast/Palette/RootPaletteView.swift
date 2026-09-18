@@ -122,7 +122,7 @@ struct RootPaletteView: View {
 
     // MARK: - Popover menu content
 
-    /// The clipboard type filter's rows; activating one is the only way the filter changes.
+    /// The keyboard-accessible menu mirrors the clipboard filter chips.
     private var clipboardFilterContent: PopoverMenuContent {
         PopoverMenuContent(
             items: ClipboardFilter.allCases.map { filter in
@@ -153,11 +153,8 @@ struct RootPaletteView: View {
     /// The launcher's bottom-left app menu content.
     private var appMenuContent: PopoverMenuContent {
         PopoverMenuContent(items: [
-            PopoverMenuItem(title: "About Tinycast", systemImage: "info.circle") {
-                core.settingsCoordinator.showAbout()
-            },
-            PopoverMenuItem(title: "Support Tinycast", systemImage: "heart") {
-                core.supportCoordinator.showSupport()
+            PopoverMenuItem(title: "Settings", systemImage: "gearshape") {
+                core.settingsCoordinator.showSettings()
             }
         ])
     }
@@ -195,17 +192,18 @@ struct RootPaletteView: View {
         let showActionGroup =
             (count > 0 || vm.mode == .quicklinkArguments) && screen.hasPrimaryAction(at: sel)
 
+        let suppressContentMotion = reduceMotion || vm.mode == .clipboard
         // One header position, so focus survives the swap. See docs/features/palette.md.
         return Group {
-            if isCollapsed {
+            if isCollapsed || vm.mode == .clipboard {
                 Color.clear
             } else {
                 screen.body(selection: sel, scroll: scroll)
             }
         }
         .frame(minHeight: 0, maxHeight: .infinity)
-        .keyframeAnimator(initialValue: CGFloat.zero, trigger: vm.mode) { [reduceMotion] content, offset in
-            content.offset(y: reduceMotion ? 0 : offset)
+        .keyframeAnimator(initialValue: CGFloat.zero, trigger: vm.mode) { [suppressContentMotion] content, offset in
+            content.offset(y: suppressContentMotion ? 0 : offset)
         } keyframes: { _ in
             MoveKeyframe(Theme.Spacing.sm)
             CubicKeyframe(CGFloat.zero, duration: Theme.Duration.enter)
@@ -266,7 +264,11 @@ struct RootPaletteView: View {
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelHeight = $0 }
         .background(Theme.Colors.panelScrim)
         .background(VisualEffectView())
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
+        .clipShape(UnevenRoundedRectangle(
+            topLeadingRadius: Theme.Radius.panel,
+            bottomLeadingRadius: vm.mode == .clipboard ? 0 : Theme.Radius.panel,
+            bottomTrailingRadius: vm.mode == .clipboard ? 0 : Theme.Radius.panel,
+            topTrailingRadius: Theme.Radius.panel, style: .continuous))
         // Every show bumps focusToken: refocus search and drop any menu left open.
         .onChange(of: vm.focusToken) {
             if vm.mode == .jsonEditor {
@@ -498,14 +500,16 @@ struct RootPaletteView: View {
     private var topDragStrip: some View {
         Color.clear
             .frame(height: Theme.Size.headerPadding)
-            .windowDraggable(settings.paletteDraggable, onBegan: beginDrag, onEnded: endDrag)
+            .windowDraggable(settings.paletteDraggable && vm.mode != .clipboard,
+                             onBegan: beginDrag, onEnded: endDrag)
     }
 
     /// A header sliver nothing occupies — safe to drag; the search field handles its own.
     private func headerGutter(width: CGFloat) -> some View {
         Color.clear
             .frame(width: width)
-            .windowDraggable(settings.paletteDraggable, onBegan: beginDrag, onEnded: endDrag)
+            .windowDraggable(settings.paletteDraggable && vm.mode != .clipboard,
+                             onBegan: beginDrag, onEnded: endDrag)
     }
 
     private func beginDrag() { core.paletteCoordinator.beginPaletteDrag() }
@@ -517,8 +521,8 @@ struct RootPaletteView: View {
             headerGutter(width: Theme.Spacing.panelInset)
             // Sub-screens of the root search, so their header icon is a back chevron.
             if vm.mode != .launcher {
-                Button(action: navigateBack) {
-                    Image(systemName: "chevron.left")
+                Button(action: vm.mode == .clipboard ? { core.paletteCoordinator.hidePalette() } : navigateBack) {
+                    Image(systemName: vm.mode == .clipboard ? "xmark" : "chevron.left")
                         .font(Theme.Typography.headerIcon)
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
@@ -526,6 +530,7 @@ struct RootPaletteView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(vm.mode == .clipboard ? "关闭剪贴板" : "返回")
             } else {
                 Image(systemName: vm.mode.systemImage)
                     .font(Theme.Typography.headerIcon)
@@ -551,7 +556,8 @@ struct RootPaletteView: View {
                 headerGutter(width: Theme.Spacing.md)
                 ClipboardFilterButton(
                     filter: vm.clipboardFilter, isOpen: openMenu == .clipboardFilter,
-                    action: toggleClipboardFilter)
+                    action: toggleClipboardFilter,
+                    onSelect: { vm.clipboardFilter = $0; closeMenus() })
             }
             if !isCollapsed, vm.mode == .ai {
                 headerGutter(width: Theme.Spacing.md)
@@ -676,7 +682,7 @@ struct RootPaletteView: View {
             .accessibilityLabel(Text(searchPrompt))
             // Never branches on query — that tore down the field editor mid-keystroke once.
             .overlay {
-                if settings.paletteDraggable {
+                if settings.paletteDraggable, vm.mode != .clipboard {
                     TextTrailingDragHandle(
                         text: vm.query, font: Theme.Typography.searchFieldNSFont,
                         onBegan: beginDrag, onEnded: endDrag)
@@ -912,8 +918,14 @@ struct RootPaletteView: View {
     /// chat's edge opens a fresh screen, so a draft is never handed to a list that would search it.
     private func cycleMode() {
         switch PaletteTabAction.resolve(mode: vm.mode, aiEnabled: settings.aiEnabled) {
-        case .carryQuery(let mode): vm.mode = mode
-        case .freshScreen(let mode): vm.prepare(mode: mode)
+        case .carryQuery(let mode):
+            if mode == .clipboard {
+                core.paletteCoordinator.showPalette(mode: .clipboard)
+            } else { vm.mode = mode }
+        case .freshScreen(let mode):
+            if mode == .clipboard {
+                core.paletteCoordinator.showPalette(mode: .clipboard)
+            } else { vm.prepare(mode: mode) }
         }
     }
 

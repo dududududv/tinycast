@@ -3,6 +3,11 @@ import CoreGraphics
 /// Where the palette's top-left corner sits. Pure, with every screen fact injected, so the window
 /// controller holds no placement maths of its own and this stays testable off a display.
 enum PalettePlacement {
+    static func clipboardFrame(screenFrame: CGRect) -> CGRect {
+        CGRect(x: screenFrame.minX, y: screenFrame.minY, width: screenFrame.width,
+               height: min(Theme.Size.clipboardPanelHeight, screenFrame.height))
+    }
+
     static func footerHeight(panelHeight: CGFloat, compactHeight: CGFloat, fullHeight: CGFloat) -> CGFloat {
         min(fullHeight, max(0, panelHeight - compactHeight))
     }

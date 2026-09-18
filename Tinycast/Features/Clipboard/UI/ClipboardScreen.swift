@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// The clipboard browser: a filtered list beside a preview of whichever entry is selected.
 struct ClipboardScreen: PaletteScreen {
     let store: ClipboardStore
     let core: AppCore
@@ -11,6 +10,11 @@ struct ClipboardScreen: PaletteScreen {
     var rows: [ClipboardItem] { store.search(vm.query, filter: vm.clipboardFilter) }
 
     var primaryActionTitle: String { vm.pasteTarget?.pasteTitle ?? "Paste" }
+
+    func move(_ delta: Int, axis: PaletteAxis, from selection: Int) -> Int? {
+        guard axis == .horizontal, vm.query.isEmpty else { return nil }
+        return min(max(0, selection + delta), max(0, rows.count - 1))
+    }
 
     private func item(at selection: Int) -> ClipboardItem? {
         let rows = rows
@@ -101,24 +105,19 @@ struct ClipboardScreen: PaletteScreen {
             EmptyResults(text: vm.clipboardFilter.emptyMessage)
         } else {
             let selected = item(at: selection)
-            HStack(spacing: 0) {
-                ClipboardList(
-                    results: rows,
-                    selectedID: selected?.id,
-                    scroll: scroll,
-                    onSelect: { item in vm.selection = rows.firstIndex(of: item) ?? 0 },
-                    onActivate: { activate(at: vm.selection) },
-                    onActions: { item in
-                        if let index = rows.firstIndex(of: item) { vm.selection = index }
-                        openActions()
-                    }
-                )
-                .frame(width: Theme.Size.clipboardListWidth)
-                Rectangle()
-                    .fill(Theme.Colors.separator)
-                    .frame(width: 1)
-                ClipboardPreview(item: selected)
-            }
+            ClipboardList(
+                results: rows,
+                selectedID: selected?.id,
+                scroll: scroll,
+                onSelect: { item in vm.selection = rows.firstIndex(of: item) ?? 0 },
+                onActivate: { activate(at: vm.selection) },
+                onPin: { core.clipboardCoordinator.togglePinnedClip($0) },
+                onCopy: { core.clipboardCoordinator.copyToClipboard($0) },
+                onActions: { item in
+                    if let index = rows.firstIndex(of: item) { vm.selection = index }
+                    openActions()
+                }
+            )
         }
     }
 }

@@ -7,6 +7,7 @@ enum ClipboardFilter: CaseIterable, Sendable {
     case image
     case link
     case email
+    case pinned
 
     var title: String {
         switch self {
@@ -15,6 +16,7 @@ enum ClipboardFilter: CaseIterable, Sendable {
         case .image: return "Images Only"
         case .link: return "Links Only"
         case .email: return "Emails Only"
+        case .pinned: return "收藏"
         }
     }
 
@@ -26,6 +28,7 @@ enum ClipboardFilter: CaseIterable, Sendable {
         case .image: return "photo"
         case .link: return "link"
         case .email: return "at"
+        case .pinned: return "pin.fill"
         }
     }
 
@@ -37,10 +40,11 @@ enum ClipboardFilter: CaseIterable, Sendable {
         case .image: return "No images in clipboard history"
         case .link: return "No links in clipboard history"
         case .email: return "No email addresses in clipboard history"
+        case .pinned: return "还没有收藏的剪贴板记录"
         }
     }
 
-    /// The five are exclusive: a copied URL is a link rather than a narrower kind of text.
+    /// Content types are exclusive; favorites filters pins across all content types.
     func matches(_ item: ClipboardItem) -> Bool {
         switch self {
         case .all: return true
@@ -48,6 +52,7 @@ enum ClipboardFilter: CaseIterable, Sendable {
         case .text: return item.textForm == .plain
         case .link: return item.textForm == .link
         case .email: return item.textForm == .email
+        case .pinned: return item.isPinned
         }
     }
 

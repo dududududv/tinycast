@@ -34,7 +34,7 @@ final class PaletteCoordinator {
     }
 
     func togglePalette() {
-        if windowController.isVisible, windowController.isKeyWindow {
+        if windowController.isVisible, !windowController.isClipboardVisible, windowController.isKeyWindow {
             hidePalette()
         } else {
             summonPalette()
@@ -50,7 +50,7 @@ final class PaletteCoordinator {
     }
 
     func toggleClipboard() {
-        if windowController.isVisible, palette.mode == .clipboard {
+        if windowController.isClipboardVisible {
             hidePalette()
         } else {
             showPalette(mode: .clipboard)
@@ -58,7 +58,7 @@ final class PaletteCoordinator {
     }
 
     func toggleEmoji() {
-        if windowController.isVisible, palette.mode == .emoji {
+        if windowController.isVisible, !windowController.isClipboardVisible, palette.mode == .emoji {
             hidePalette()
         } else {
             showPalette(mode: .emoji)
@@ -67,6 +67,10 @@ final class PaletteCoordinator {
 
     /// Shows the palette, honoring Pop to Root Search. See docs/features/palette.md#state-flow.
     func showPalette(mode: PaletteMode, restoreAnyMode: Bool = false) {
+        if mode == .clipboard {
+            windowController.showClipboard()
+            return
+        }
         let preserved = windowController.takePreservedState()
         if let preserved, restoreAnyMode || preserved.mode == mode {
             palette.restore(preserved)

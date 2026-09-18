@@ -2,30 +2,31 @@ import AppKit
 import Foundation
 
 @MainActor
-private final class AppSettings {
+final class AppSettings {
     var compactMode = false
 }
 
 @MainActor
-private final class AppIndex {
+final class AppIndex {
     func refresh() async {}
 }
 
 @MainActor
-private final class FileSearchSession {
+final class FileSearchSession {
     func cancel() {}
     func search(_ query: String) {}
 }
 
-private enum PaletteMode {
+enum PaletteMode {
     case launcher
     case clipboard
     case fileSearch
     case jsonEditor
+    case emoji
 }
 
 @MainActor
-private final class PaletteState {
+final class PaletteState {
     struct Snapshot {
         let mode: PaletteMode
         let query: String
@@ -49,20 +50,31 @@ private final class PaletteState {
 }
 
 @MainActor
-private final class PaletteWindowController {
+final class PaletteWindowController {
     var isVisible = false
     var isKeyWindow = false
+    var isClipboardVisible = false
     var previousApp: NSRunningApplication?
     var preservedState: PaletteState.Snapshot?
     private(set) var showCount = 0
 
     func show() {
         isVisible = true
+        isClipboardVisible = false
+        isKeyWindow = true
         showCount += 1
+    }
+
+    func showClipboard() {
+        isVisible = true
+        isClipboardVisible = true
+        isKeyWindow = true
     }
 
     func hide(restoreFocus: Bool) {
         isVisible = false
+        isClipboardVisible = false
+        isKeyWindow = false
     }
 
     func takePreservedState() -> PaletteState.Snapshot? {
@@ -174,12 +186,32 @@ private struct PaletteRetentionTests {
         check("a stored snapshot restores its query", overwrittenPalette.query == "saved query")
         check("restoring consumes the overwritten snapshot", overwrittenWindow.preservedState == nil)
 
-        let (dedicated, dedicatedPalette, _) = makeCoordinator(mode: .jsonEditor, preserved: true)
+        let (dedicated, dedicatedPalette, dedicatedWindow) = makeCoordinator(mode: .jsonEditor, preserved: true)
         dedicated.showPalette(mode: .clipboard)
-        check(
-            "a dedicated shortcut still opens its requested screen",
-            dedicatedPalette.mode == .clipboard)
-        check("a dedicated shortcut prepares once", dedicatedPalette.prepareCount == 1)
+        check("the clipboard entry opens its own window", dedicatedWindow.isClipboardVisible)
+        check("clipboard does not replace the main plugin", dedicatedPalette.mode == .jsonEditor)
+        check("clipboard does not prepare the main state", dedicatedPalette.prepareCount == 0)
+        check("clipboard preserves the main snapshot", dedicatedWindow.preservedState != nil)
+        dedicated.togglePalette()
+        check("the default shortcut switches from clipboard to main", !dedicatedWindow.isClipboardVisible)
+        check("the default shortcut shows main", dedicatedWindow.isVisible)
+        check("the default shortcut restores JSON", dedicatedPalette.mode == .jsonEditor)
+        check("the default shortcut restores its query", dedicatedPalette.query == "saved query")
+        dedicated.togglePalette()
+        check("the next default shortcut hides main", !dedicatedWindow.isVisible)
+        dedicated.toggleClipboard()
+        check("the clipboard shortcut opens clipboard", dedicatedWindow.isClipboardVisible)
+        dedicated.toggleClipboard()
+        check("the clipboard shortcut hides clipboard", !dedicatedWindow.isVisible)
+        dedicated.togglePalette()
+        check("main still restores JSON after hiding clipboard", dedicatedPalette.mode == .jsonEditor)
+        check("main does not reopen clipboard", !dedicatedWindow.isClipboardVisible)
+
+        let (launcher, launcherPalette, launcherWindow) = makeCoordinator(mode: .launcher, preserved: false)
+        launcher.toggleClipboard()
+        launcher.togglePalette()
+        check("launcher stays launcher after clipboard", launcherPalette.mode == .launcher)
+        check("default activation opens the main window", launcherWindow.isVisible && !launcherWindow.isClipboardVisible)
 
         if failures == 0 {
             print("palette retention tests passed")

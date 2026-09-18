@@ -80,6 +80,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `json-editor-test` | `JSONEditor/Model/` — validation, formatting and syntax tokenization |
 | `calendar-test` | all of `Calendar/Model/` plus weather decoding — month grids, lunar dates, solar terms, holidays, almanac and forecast mapping |
 | `clipboard-test` | `Clipboard/Model/ClipboardStore.swift` |
+| `clipboard-presentation-test` | hidden native panels: fixed frame, clipped layer animation, cancellation and hosting-view transfer |
 | `emoji-test` | `Emoji/Model/EmojiCatalog.swift`, `EmojiGridGeometry.swift`, the generated data |
 | `palette-selection-test` | `Features/PaletteRowIndex.swift` |
 | `palette-placement-test` | `DesignSystem/Theme.swift`, `Palette/PalettePlacement.swift` |
@@ -241,6 +242,26 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - No flash, flicker or reflow on open, and row metrics unchanged
 
 ### Clipboard
+
+- With Chinese IME candidates visible, Return confirms text without pasting, copying or closing;
+  the next Return performs the selected action. Arrows, Escape and Backspace belong to the IME.
+- Repeat candidate confirmation in launcher, AI, Calendar city/month fields, extension forms,
+  Notes search/rename/body, JSON and Settings fields; no premature launch/send/save or window dismissal.
+- Editing Calendar or extension fields with an empty main search must not navigate back on Backspace.
+
+- Clipboard opens in a separate full-width bottom window, sliding upward; Calendar and JSON retain their windows and sizes
+- Toggle rapidly during entry: no delayed completion reopens a hidden window; Reduce Motion skips the slide
+- Summon on side-by-side and vertically stacked displays: no content appears on another display
+- Move the pointer to another screen during entry: the visible clipboard remains on its summon screen
+- Clipboard close and click-away dismiss it; a paste still reaches the original external app
+- Delete the entire clipboard query and keep pressing Backspace: the bottom window remains open
+- Tab stays within clipboard controls; Escape and Close dismiss without showing the launcher
+- Clipboard query, selection, filter and menu changes do not mutate the search window's state
+- Cards show source, time, preview and size; click selects, double-click pastes, pin/copy buttons work
+- All/Text/Images/Links/Emails/Favorites chips and the Command-P menu agree, including empty results
+- Left/right with an empty query reveals adjacent cards; with a query it still moves the text caret
+- Switching filters, deleting the selected card, and pinning while scrolled keep selection valid
+- On small or offset displays the strip spans the screen frame exactly and rests at its bottom edge
 
 - A copy appears at the top within about a second; an image copy records a thumbnail
 - Search is correct both under and over three characters

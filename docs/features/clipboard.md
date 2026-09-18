@@ -48,19 +48,43 @@ references — an image imported from another app's cache — are left on disk w
 retention cut can strand hundreds of files, so those deletions run off the main actor to keep
 capture-time pruning from hitching.
 
+## Card browser
+
+Clipboard uses a separate borderless panel, not the search window resized. It spans 100% of the
+target screen's frame width, rests at its bottom edge, and is 360 points tall (capped to screen
+height). The destination screen is captured once per summon. The window is positioned while hidden
+and never moves during entry: only its hosted content translates upward inside a clipped viewport
+over 200 ms. This keeps stacked displays out of the animation path. Reduce Motion presents it immediately.
+The search panel is hidden before the clipboard panel appears. Each panel has its own hosting tree,
+search state and keyboard routing. `AppCore.clipboardPalette` owns the clipboard query, filter,
+selection, menu state and focus; `ClipboardPanelView` never uses launcher navigation. Empty Backspace
+does nothing, Tab stays in this window, and Escape closes its menu or dismisses the clipboard directly.
+The retention timeout clears the clipboard's state when it expires. Other modes keep their existing
+window dimensions. Clipboard cannot be dragged. A compact search field, type chips, Actions,
+Settings and Close sit above the cards. Search and type chips are centered as one group against the
+whole window, with equal reserved space on both sides and the action buttons remaining at the right.
+The lazy horizontal strip shows 260-point neutral cards with
+small type accents, a selected outline, source app icon/name, static minute-precision time, text/image preview,
+character/file size summary, and pin/copy buttons. Favorites reuse the existing pin storage and order.
+Time uses `HH:mm` for today and `yyyy-MM-dd HH:mm` for earlier dates, without ticking relative labels.
+Images are downsampled off-main; unselected text previews are bounded to 4000 characters, while the
+selected card keeps the full selectable text. Click selects, double-click pastes, and right-click
+opens the existing Actions menu. Arrow-key/reset intents reveal cards horizontally; mouse selection
+does not change scroll position. Left/right navigate when the query is empty and edit the query
+otherwise; up/down and all existing paste/copy shortcuts remain available.
+
 ## Type filter
 
-The clipboard header carries a `ClipboardFilterButton` at the trailing edge of the search field —
-the only palette screen with a control up there. It toggles a `PopoverMenu` anchored `.topTrailing`
-under the button, so the ⌘K Actions menu, the app menu and this one are the same view on the same
-glass. **⌘P** toggles it; ↑/↓, ↵ and Esc come free from `RootPaletteView`'s one menu path, and the
+The clipboard header carries inline chips for All, Text, Images, Links, Emails and Favorites.
+On narrow displays they collapse to the existing `ClipboardFilterButton`. The filter menu uses
+`PopoverMenu` anchored `.topTrailing`, sharing the Actions menu's presentation. **⌘P** toggles it; ↑/↓, ↵ and Esc come free from `RootPaletteView`'s one menu path, and the
 menu opens highlighting the *active* filter rather than the first row, the way a pop-up button does.
 The filter is not gated on the list having rows: an over-narrow filter empties it, and the button is
 the way back out.
 
-`ClipboardFilter` owns the five cases and everything the UI needs from them — title, glyph, and the
+`ClipboardFilter` owns the six cases and everything the UI needs from them — title, glyph, and the
 `emptyMessage` that stops "Clipboard history is empty" from appearing over a history that only looks
-empty. The cases are **exclusive**: a copied URL is a link, not a narrower kind of text, so *Text
+empty. The content-type cases are **exclusive** (Favorites instead matches pinned entries): a copied URL is a link, not a narrower kind of text, so *Text
 Only* means prose.
 
 `ClipboardItem.textForm` derives `plain`/`link`/`email` from the text on demand — nil for an image.
@@ -88,8 +112,8 @@ recency.
 Pins change four things:
 
 - **Order.** `search` returns pinned rows first — for the empty query and for FTS hits alike — under
-  one "Pinned" section above the date buckets, in pin order with the oldest pin at the top, so a new
-  pin joins the end of the section instead of displacing the ones already there. `items` itself stays
+  the leading cards, in pin order with the oldest pin first, so a new
+  pin joins the end of the pinned block instead of displacing the ones already there. `items` itself stays
   in pure recency order; the display split is memoized next to the search memo and invalidated with
   it. Pinned rows are matched **in memory**
   rather than taken from the FTS result, since the statement's `LIMIT` could otherwise drop one out
@@ -100,7 +124,7 @@ Pins change four things:
   out from under the selection. It's the same delete + re-insert `promote` uses.
 - **Retention.** Pruning skips pinned rows (`AND pinned_at IS NULL`), so a pin outlives the retention
   window. "Clear History" still deletes everything.
-- **Selection.** Pinning lifts a row out of its date bucket, so `ClipboardCoordinator.togglePinnedClip` moves the
+- **Selection.** Pinning lifts a card into the leading pinned block, so `ClipboardCoordinator.togglePinnedClip` moves the
   palette selection to the row's new index in the _current_ results and bumps `palette.followToken`,
   which is what makes the list scroll the highlight back into view.
 

@@ -1,89 +1,428 @@
 import AppKit
 import SwiftUI
 
-struct ClipboardList: View {
-    let results: [ClipboardItem]
-    let selectedID: ClipboardItem.ID?
-    /// Changes only when the list should scroll, so mouse selection never yanks it.
-    let scroll: ScrollIntent
-    let onSelect: (ClipboardItem) -> Void
-    let onActivate: () -> Void
-    let onActions: (ClipboardItem) -> Void
+struct ClipboardPanelView: View {
+    @Environment(AppCore.self) private var core
+    @Environment(PaletteState.self) private var state
     @Environment(ClipboardStore.self) private var store
+    @FocusState private var searchFocused: Bool
+    @State private var scroll = ScrollIntent(kind: .top)
+    @State private var menu: Menu?
+    @State private var menuSelection = 0
 
-    private enum Row: Identifiable {
-        case header(String)
-        case item(ClipboardItem, slot: Character?)
-        var id: String {
-            switch self {
-            case .header(let title): return "header-" + title
-            case .item(let item, _): return item.id.uuidString
-            }
-        }
+    private enum Menu { case actions, filters }
+
+    private var screen: ClipboardScreen {
+        ClipboardScreen(store: store, core: core, vm: state,
+                        openActions: { toggle(.actions) },
+                        scrollToFollow: { scroll = ScrollIntent(kind: .follow) })
     }
 
-    /// Whether the selection sits on flat index 0, whose section header should stay visible.
-    private var firstRowSelected: Bool {
-        selectedID != nil && selectedID == results.first?.id
-    }
+    private var selection: Int { min(max(0, state.selection), max(0, screen.rows.count - 1)) }
 
-    /// Pins share one header; the rest are newest-first, a header per date bucket.
-    private var rows: [Row] {
-        var rows: [Row] = []
-        var currentTitle: String?
-        var pinnedSlot = 0
-        for item in results {
-            let title = item.isPinned ? "Pinned" : DateBucket(for: item.createdAt).title
-            if title != currentTitle {
-                rows.append(.header(title))
-                currentTitle = title
-            }
-            let slot = item.isPinned ? FavoriteSlots.digit(at: pinnedSlot) : nil
-            if item.isPinned { pinnedSlot += 1 }
-            rows.append(.item(item, slot: slot))
+    private var menuContent: PopoverMenuContent? {
+        switch menu {
+        case .actions: return screen.actions(at: selection)
+        case .filters:
+            return PopoverMenuContent(items: ClipboardFilter.allCases.map { filter in
+                PopoverMenuItem(title: filter.title, systemImage: filter.systemImage) {
+                    state.clipboardFilter = filter
+                }
+            })
+        case nil: return nil
         }
-        return rows
     }
 
     var body: some View {
-        let rows = rows
-        return ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(rows) { row in
-                        switch row {
-                        case .header(let title):
-                            SectionHeader(title: title, isFirst: row.id == rows.first?.id)
-                        case .item(let item, let slot):
-                            ClipboardRow(
-                                item: item, selected: item.id == selectedID,
-                                imageURL: store.imageURL(for: item), slot: slot
+        VStack(spacing: 0) {
+            header
+            screen.body(selection: selection, scroll: scroll)
+                .frame(minHeight: 0, maxHeight: .infinity)
+            HStack {
+                Text("\(screen.rows.count) 条记录")
+                Spacer()
+                Text("← → 选择    ↵ 粘贴    ⌘↵ 复制    esc 关闭")
+            }
+            .font(Theme.Typography.rowTrailing)
+            .foregroundStyle(Theme.Colors.textTertiary)
+            .padding(.horizontal, Theme.Spacing.panelInset)
+            .padding(.bottom, Theme.Spacing.xl)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .coordinateSpace(name: "clipboardPanel")
+        .background(Theme.Colors.panelScrim)
+        .background(VisualEffectView())
+        .overlay {
+            if menu != nil {
+                Color.clear.contentShape(Rectangle()).onTapGesture { closeMenu() }
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if let content = menuContent {
+                PopoverMenu(
+                    header: content.header, items: content.items, selection: $menuSelection,
+                    onActivate: activateMenu)
+                .padding(.top, Theme.Size.headerHeight + Theme.Spacing.xl)
+                .padding(.trailing, Theme.Spacing.panelInset)
+            }
+        }
+        .clipShape(UnevenRoundedRectangle(
+            topLeadingRadius: Theme.Radius.panel, topTrailingRadius: Theme.Radius.panel,
+            style: .continuous))
+        .onChange(of: state.focusToken, initial: true) {
+            closeMenu()
+            searchFocused = true
+        }
+        .onChange(of: state.query) { resetSelection() }
+        .onChange(of: state.clipboardFilter) { resetSelection() }
+        .onChange(of: screen.rows.count) { state.selection = selection }
+        .onChange(of: menu) { state.menuOpen = menu != nil }
+        .onChange(of: state.pinChordToken) { _ = screen.pin(at: selection) }
+        .onChange(of: state.favoriteSlotToken) {
+            if let index = state.favoriteSlotIndex { _ = screen.activatePinned(at: index) }
+        }
+        .onKeyPress(.escape) {
+            if menu != nil { closeMenu() } else { core.paletteCoordinator.hidePalette() }
+            return .handled
+        }
+        .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow], phases: [.down, .repeat]) { press in
+            let delta = press.key == .leftArrow || press.key == .upArrow ? -1 : 1
+            if menu != nil {
+                let count = menuContent?.items.count ?? 0
+                menuSelection = min(max(0, menuSelection + delta), max(0, count - 1))
+            } else {
+                if !state.query.isEmpty && (press.key == .leftArrow || press.key == .rightArrow) {
+                    return .ignored
+                }
+                state.selection = min(max(0, selection + delta), max(0, screen.rows.count - 1))
+                scroll = ScrollIntent(kind: .follow)
+            }
+            return .handled
+        }
+        .onKeyPress(keys: [.return], phases: .down) { press in
+            if press.modifiers.contains(.command) {
+                _ = screen.secondary(at: selection)
+            } else if press.modifiers.contains(.option) {
+                _ = screen.pasteKeepingWindowOpen(at: selection)
+            } else if menu != nil {
+                activateMenu(menuSelection)
+            } else {
+                return .ignored
+            }
+            return .handled
+        }
+        .onKeyPress(keys: ["k", "K", "p", "P", "x", "X"]) { press in
+            if press.modifiers.contains(.command) {
+                if press.characters.lowercased() == "k" { toggle(.actions); return .handled }
+                if press.characters.lowercased() == "p" { toggle(.filters); return .handled }
+            }
+            if press.modifiers.contains(.control), press.characters.lowercased() == "x" {
+                if press.modifiers.contains(.shift) { screen.deleteAll() } else { screen.delete(at: selection) }
+                return .handled
+            }
+            return .ignored
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: Theme.Spacing.xl) {
+            headerActions.disabled(true).hidden().allowsHitTesting(false).accessibilityHidden(true)
+            Spacer(minLength: 0)
+            searchControls
+            Spacer(minLength: 0)
+            headerActions
+        }
+        .frame(height: Theme.Size.headerHeight)
+        .padding(.horizontal, Theme.Spacing.panelInset)
+        .padding(.top, Theme.Spacing.md)
+    }
+
+    private var searchControls: some View {
+        @Bindable var state = state
+        return HStack(spacing: Theme.Spacing.xl) {
+            HStack(spacing: Theme.Spacing.md) {
+                SymbolImage(name: "magnifyingglass", size: Theme.Size.noteGlyph)
+                    .foregroundStyle(Theme.Colors.textTertiary)
+                TextField("搜索剪贴板", text: $state.query)
+                    .textFieldStyle(.plain)
+                    .focused($searchFocused)
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .named("clipboardPanel")) } action: {
+                        state.searchFieldFrame = $0
+                    }
+                    .onSubmit {
+                        if menu != nil { activateMenu(menuSelection) } else { screen.activate(at: selection) }
+                    }
+            }
+            .padding(.horizontal, Theme.Spacing.xl)
+            .frame(width: Theme.Size.clipboardSearchWidth, height: Theme.Size.menuButton)
+            .background(Theme.Colors.cardFill, in: RoundedRectangle(cornerRadius: Theme.Radius.row))
+            ClipboardFilterButton(
+                filter: state.clipboardFilter, isOpen: menu == .filters,
+                action: { toggle(.filters) },
+                onSelect: { state.clipboardFilter = $0; closeMenu() })
+        }
+    }
+
+    private var headerActions: some View {
+        HStack(spacing: Theme.Spacing.xl) {
+            BarButton(action: { toggle(.actions) }) {
+                SymbolImage(name: "ellipsis", size: Theme.Size.noteGlyph)
+            }
+            .help("操作 · ⌘K").accessibilityLabel("操作")
+            BarButton(action: { core.settingsCoordinator.showSettings() }) {
+                SymbolImage(name: "gearshape", size: Theme.Size.noteGlyph)
+            }
+            .help("设置").accessibilityLabel("设置")
+            BarButton(action: { core.paletteCoordinator.hidePalette() }) {
+                SymbolImage(name: "xmark", size: Theme.Size.noteGlyph)
+            }
+            .help("关闭剪贴板 · esc").accessibilityLabel("关闭剪贴板")
+        }
+        .fixedSize()
+    }
+
+    private func toggle(_ requested: Menu) {
+        if menu == requested { closeMenu(); return }
+        if requested == .actions && screen.rows.isEmpty { return }
+        menu = requested
+        menuSelection = requested == .filters
+            ? ClipboardFilter.allCases.firstIndex(of: state.clipboardFilter) ?? 0 : 0
+    }
+
+    private func closeMenu() {
+        menu = nil
+        state.menuOpen = false
+    }
+
+    private func activateMenu(_ index: Int) {
+        guard let content = menuContent, content.items.indices.contains(index) else { return }
+        closeMenu()
+        content.items[index].action()
+    }
+
+    private func resetSelection() {
+        state.selection = 0
+        scroll = ScrollIntent(kind: .top)
+    }
+}
+
+struct ClipboardList: View {
+    let results: [ClipboardItem]
+    let selectedID: ClipboardItem.ID?
+    let scroll: ScrollIntent
+    let onSelect: (ClipboardItem) -> Void
+    let onActivate: () -> Void
+    let onPin: (ClipboardItem) -> Void
+    let onCopy: (ClipboardItem) -> Void
+    let onActions: (ClipboardItem) -> Void
+    @Environment(ClipboardStore.self) private var store
+
+    var body: some View {
+        GeometryReader { geometry in
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: Theme.Spacing.lg) {
+                        ForEach(Array(results.enumerated()), id: \.element.id) { index, item in
+                            ClipboardCard(
+                                item: item, selected: item.id == selectedID, index: index,
+                                imageURL: store.imageURL(for: item),
+                                onSelect: { onSelect(item) },
+                                onActivate: { onSelect(item); onActivate() },
+                                onPin: { onPin(item) }, onCopy: { onCopy(item) }
                             )
-                            .selectionFrame(item.id == selectedID)
-                            .contentShape(Rectangle())
-                            // Simultaneous gestures, and the light catcher: `.contextMenu` stalls.
-                            .onTapGesture { onSelect(item) }
-                            .simultaneousGesture(
-                                TapGesture(count: 2).onEnded {
-                                    onSelect(item)
-                                    onActivate()
-                                }
-                            )
+                            .frame(width: Theme.Size.clipboardCardWidth)
+                            .frame(height: max(0, geometry.size.height - Theme.Spacing.panelInset * 2))
+                            .id(item.id)
                             .onRightClick { onActions(item) }
                         }
                     }
+                    .padding(Theme.Spacing.panelInset)
                 }
-                .padding(.horizontal, Theme.Spacing.md)
-                .padding(.top, Theme.Spacing.xs)
-                .padding(.bottom, Theme.Spacing.md)
-                .hideNativeScrollers()
-                .scrollOriginAnchor()
+                .scrollIndicators(.hidden)
+                .scrollEdgeEffectStyle(.none, for: .all)
+                .onChange(of: scroll, initial: true) {
+                    let target = scroll.kind == .top ? results.first?.id : selectedID
+                    if let target { proxy.scrollTo(target, anchor: scroll.kind == .top ? .leading : nil) }
+                }
             }
-            .edgeDissolve()
-            .thinScrollbar()
-            // Snap to the origin on the first row so its section header shows too.
-            .scrollFollowsSelection(
-                scroll, row: selectedID?.uuidString, atOrigin: firstRowSelected, proxy: proxy)
+        }
+    }
+}
+
+private struct ClipboardCard: View {
+    let item: ClipboardItem
+    let selected: Bool
+    let index: Int
+    let imageURL: URL?
+    let onSelect: () -> Void
+    let onActivate: () -> Void
+    let onPin: () -> Void
+    let onCopy: () -> Void
+    @Environment(PaletteState.self) private var palette
+    @State private var hovered = false
+    @State private var summary = ""
+    @State private var thumbnail: NSImage?
+
+    private var tint: Color {
+        item.kind == .image ? Theme.Colors.clipboardImage : Theme.Colors.clipboardText
+    }
+
+    private var kindTitle: String {
+        if item.kind == .image { return "图片" }
+        switch item.textForm {
+        case .link: return "链接"
+        case .email: return "邮箱"
+        default: return "文本"
+        }
+    }
+
+    private var sourceURL: URL? {
+        IconCache.observeStyle()
+        return item.sourceBundleID.flatMap { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }
+    }
+
+    private var timestamp: String {
+        let time = item.createdAt.formatted(.verbatim(
+            "\(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits)",
+            locale: Locale(identifier: "zh_CN"), timeZone: .current, calendar: Calendar(identifier: .gregorian)))
+        guard !Calendar.current.isDateInToday(item.createdAt) else { return time }
+        let date = item.createdAt.formatted(.verbatim(
+            "\(year: .defaultDigits)-\(month: .twoDigits)-\(day: .twoDigits)",
+            locale: Locale(identifier: "zh_CN"), timeZone: .current, calendar: Calendar(identifier: .gregorian)))
+        return "\(date) \(time)"
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            preview.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).clipped()
+            footer
+        }
+        .background(selected ? Theme.Colors.selection : Theme.Colors.cardFill)
+        .overlay {
+            if hovered && !selected { Theme.Colors.rowHover.allowsHitTesting(false) }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.menuPanel, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: Theme.Radius.menuPanel, style: .continuous)
+                .strokeBorder(selected ? Theme.Colors.brand : Theme.Colors.cardStroke, lineWidth: selected ? 2 : 1)
+                .allowsHitTesting(false)
+        }
+        .armedHover($hovered)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(kindTitle)，\(sourceURL?.deletingPathExtension().lastPathComponent ?? "未知来源")")
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
+        .accessibilityAction(named: "选择", onSelect)
+        .accessibilityAction(named: "粘贴", onActivate)
+        .task(id: item.id) { await loadPreview() }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            HStack {
+                Text(kindTitle).font(Theme.Typography.sectionHeader).foregroundStyle(tint)
+                Spacer(minLength: Theme.Spacing.md)
+                sourceIcon
+            }
+            HStack(spacing: Theme.Spacing.md) {
+                Text(timestamp).monospacedDigit().lineLimit(1)
+                Spacer(minLength: 0)
+                Text(sourceURL?.deletingPathExtension().lastPathComponent ?? "未知来源")
+                    .lineLimit(1).truncationMode(.middle)
+            }
+            .font(Theme.Typography.rowTrailing)
+        }
+        .foregroundStyle(Theme.Colors.textPrimary)
+        .padding(Theme.Spacing.xl)
+        .background(Theme.Colors.cardFill)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2, perform: onActivate)
+        .onTapGesture(perform: onSelect)
+    }
+
+    @ViewBuilder
+    private var sourceIcon: some View {
+        if let sourceURL {
+            Image(nsImage: IconCache.icon(forFile: sourceURL.path))
+                .resizable().frame(width: Theme.Size.rowIcon, height: Theme.Size.rowIcon)
+        } else {
+            SymbolImage(name: "doc.on.clipboard", size: Theme.Size.rowIcon)
+        }
+    }
+
+    @ViewBuilder
+    private var preview: some View {
+        Group {
+            if item.kind == .image {
+                if let thumbnail {
+                    Image(nsImage: thumbnail).resizable().scaledToFit()
+                } else {
+                    SymbolImage(name: "photo", size: Theme.Size.dialogIcon)
+                        .foregroundStyle(Theme.Colors.textTertiary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            } else {
+                ScrollView(.vertical) {
+                    Text(selected ? item.text ?? "" : String((item.text ?? "").prefix(4000)))
+                        .font(.system(.subheadline, design: .monospaced))
+                        .textSelection(.enabled)
+                        .foregroundStyle(Theme.Colors.textPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .scrollIndicators(.hidden)
+                .scrollEdgeEffectStyle(.none, for: .all)
+            }
+        }
+        .padding(Theme.Spacing.xl)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2, perform: onActivate)
+        .onTapGesture(perform: onSelect)
+    }
+
+    private var footer: some View {
+        HStack(spacing: Theme.Spacing.xs) {
+            if item.isPinned, palette.commandHeld, let digit = FavoriteSlots.digit(at: index) {
+                Text("⌘\(String(digit))").foregroundStyle(tint)
+            } else {
+                Text("\(index + 1)").foregroundStyle(Theme.Colors.textTertiary)
+            }
+            Spacer(minLength: Theme.Spacing.xs)
+            Text(summary).lineLimit(1).foregroundStyle(Theme.Colors.textSecondary)
+            Spacer(minLength: Theme.Spacing.xs)
+            BarButton(action: onPin) {
+                SymbolImage(name: item.isPinned ? "pin.fill" : "pin", size: Theme.Size.noteGlyph)
+                    .foregroundStyle(item.isPinned ? tint : Theme.Colors.textSecondary)
+            }
+            .help(item.isPinned ? "取消收藏 · ⌘." : "收藏 · ⌘.")
+            .accessibilityLabel(item.isPinned ? "取消收藏" : "收藏")
+            BarButton(action: onCopy) {
+                SymbolImage(name: "doc.on.doc", size: Theme.Size.noteGlyph)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+            }
+            .help("复制 · ⌘↵")
+            .accessibilityLabel("复制")
+        }
+        .font(Theme.Typography.rowTrailing)
+        .padding(.horizontal, Theme.Spacing.xl)
+        .padding(.bottom, Theme.Spacing.sm)
+    }
+
+    private func loadPreview() async {
+        let text = item.text
+        let url = imageURL
+        let details = await Task.detached(priority: .utility) {
+            if let text { return "\(text.count.formatted()) 个字符" }
+            guard let url, let bytes = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize else {
+                return "图片不可用"
+            }
+            return Int64(bytes).formatted(.byteCount(style: .file))
+        }.value
+        guard !Task.isCancelled else { return }
+        summary = details
+        if let url {
+            let loaded = await ImageThumbnail.loadAsync(url, maxPixel: Theme.Size.clipboardThumbnailPixels)
+            guard !Task.isCancelled else { return }
+            thumbnail = loaded
         }
     }
 }
@@ -114,298 +453,5 @@ enum DateBucket: Int {
         } else {
             self = .earlier
         }
-    }
-}
-
-private struct ClipboardRow: View {
-    let item: ClipboardItem
-    let selected: Bool
-    let imageURL: URL?
-    /// This row's ⌘-digit, or nil when it is not among the first ten visible pins.
-    let slot: Character?
-    @Environment(PaletteState.self) private var palette
-    @State private var hovered = false
-
-    /// Selection wins over hover when a row is both; otherwise hover shows its fainter layer.
-    private var fill: Color {
-        if selected { return Theme.Colors.selection }
-        if hovered { return Theme.Colors.rowHover }
-        return .clear
-    }
-
-    var body: some View {
-        HStack(spacing: Theme.Spacing.lg) {
-            thumbnail
-            Text(previewText)
-                .font(Theme.Typography.menuRow)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 0)
-            if let slot, palette.commandHeld {
-                HStack(spacing: Theme.Spacing.xxs) {
-                    KeyCapChip(text: "⌘", style: .outline)
-                    KeyCapChip(text: String(slot), style: .outline)
-                }
-            }
-        }
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, Theme.Spacing.sm)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
-                .fill(fill)
-        )
-        .armedHover($hovered)
-    }
-
-    private var previewText: String {
-        switch item.kind {
-        // Cap before trimming: never walk a multi-MB clipboard string per row.
-        case .text:
-            return String((item.text ?? "").prefix(200)).trimmingCharacters(
-                in: .whitespacesAndNewlines)
-        case .image: return "Image"
-        }
-    }
-
-    @ViewBuilder
-    private var thumbnail: some View {
-        switch item.kind {
-        case .text:
-            glyphTile("doc.text")
-        case .image:
-            AsyncThumbnail(url: imageURL, maxPixel: 64) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: Theme.Size.rowIcon, height: Theme.Size.rowIcon)
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: Theme.Radius.thumbnail, style: .continuous))
-            } placeholder: {
-                glyphTile("photo")
-            }
-        }
-    }
-
-    /// A symbol on a rounded tile, sized so text and image rows share one shape.
-    private func glyphTile(_ systemName: String) -> some View {
-        RoundedRectangle(cornerRadius: Theme.Radius.thumbnail, style: .continuous)
-            .fill(Theme.Colors.controlSurface)
-            .frame(width: Theme.Size.rowIcon, height: Theme.Size.rowIcon)
-            .overlay(
-                Image(systemName: systemName)
-                    .font(.system(size: 12))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.secondary)
-            )
-    }
-}
-
-/// A downsampled thumbnail, decoding misses off the main thread.
-private struct AsyncThumbnail<Content: View, Placeholder: View>: View {
-    let url: URL?
-    let maxPixel: CGFloat
-    @ViewBuilder let content: (Image) -> Content
-    @ViewBuilder let placeholder: () -> Placeholder
-
-    @State private var image: NSImage?
-
-    var body: some View {
-        Group {
-            if let image {
-                content(Image(nsImage: image))
-            } else {
-                placeholder()
-            }
-        }
-        .task(id: url) {
-            guard let url else {
-                image = nil
-                return
-            }
-            if let hit = ImageThumbnail.cached(url, maxPixel: maxPixel) {
-                image = hit
-                return
-            }
-            image = nil  // show the placeholder while a new image decodes
-            image = await ImageThumbnail.loadAsync(url, maxPixel: maxPixel)
-        }
-    }
-}
-
-struct ClipboardPreview: View {
-    /// The preview pane is ~460pt wide, so 900px stays crisp at 2× without over-decoding.
-    private static let previewMaxPixel: CGFloat = 900
-
-    let item: ClipboardItem?
-    @Environment(ClipboardStore.self) private var store
-
-    var body: some View {
-        if let item {
-            VStack(alignment: .leading, spacing: 0) {
-                content(for: item)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                ClipboardInfoSection(item: item, imageURL: store.imageURL(for: item))
-            }
-            .padding(.horizontal, 12)
-        } else {
-            Color.clear
-        }
-    }
-
-    @ViewBuilder
-    private func content(for item: ClipboardItem) -> some View {
-        switch item.kind {
-        case .text:
-            ScrollView {
-                Text(item.text ?? "")
-                    .font(.system(.subheadline, design: .monospaced))
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-            }
-        case .image:
-            AsyncThumbnail(url: store.imageURL(for: item), maxPixel: Self.previewMaxPixel) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                            .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
-                    )
-            } placeholder: {
-                Image(systemName: "photo").font(.system(.largeTitle))
-                    .symbolRenderingMode(.hierarchical).foregroundStyle(.tertiary)
-            }
-        }
-    }
-}
-
-/// The "Information" block; disk-touching details are gathered off the main actor.
-private struct ClipboardInfoSection: View {
-    let item: ClipboardItem
-    let imageURL: URL?
-
-    @State private var details = Details()
-
-    private struct Details: Equatable, Sendable {
-        var characters: Int?
-        var words: Int?
-        var pixelSize: CGSize?
-        var fileBytes: Int?
-    }
-
-    private struct InfoRow: Identifiable {
-        let label: String
-        let value: String
-        var icon: NSImage?
-        var id: String { label }
-    }
-
-    /// Relative day plus exact time; shared, `DateFormatter` being expensive to build.
-    @MainActor private static let copiedFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .medium
-        formatter.doesRelativeDateFormatting = true
-        return formatter
-    }()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Information")
-                .font(Theme.Typography.sectionHeader)
-                .foregroundStyle(.secondary)
-            VStack(spacing: 0) {
-                let rows = self.rows
-                ForEach(rows) { row in
-                    if row.id != rows.first?.id { Divider() }
-                    HStack(spacing: Theme.Spacing.sm) {
-                        Text(row.label).foregroundStyle(.secondary)
-                        Spacer(minLength: Theme.Spacing.lg)
-                        if let icon = row.icon {
-                            Image(nsImage: icon)
-                                .resizable()
-                                .frame(width: 20, height: 20)
-                        }
-                        Text(row.value).lineLimit(1).truncationMode(.middle)
-                    }
-                    .font(.callout)
-                    .padding(.vertical, Theme.Spacing.sm)
-                }
-            }
-        }
-        .padding(.top, Theme.Spacing.xl)
-        .task(id: item.id) { await loadDetails() }
-    }
-
-    private var rows: [InfoRow] {
-        var rows: [InfoRow] = []
-        if let source {
-            rows.append(InfoRow(label: "Source", value: source.name, icon: source.icon))
-        }
-        switch item.kind {
-        case .text:
-            rows.append(InfoRow(label: "Type", value: "Text"))
-            if let characters = details.characters {
-                rows.append(InfoRow(label: "Characters", value: characters.formatted()))
-            }
-            if let words = details.words {
-                rows.append(InfoRow(label: "Words", value: words.formatted()))
-            }
-        case .image:
-            rows.append(InfoRow(label: "Type", value: "Image"))
-            if let size = details.pixelSize {
-                rows.append(
-                    InfoRow(label: "Dimensions", value: "\(Int(size.width))×\(Int(size.height))"))
-            }
-            if let bytes = details.fileBytes {
-                rows.append(
-                    InfoRow(
-                        label: "Size", value: Int64(bytes).formatted(.byteCount(style: .file))))
-            }
-        }
-        rows.append(
-            InfoRow(label: "Copied", value: Self.copiedFormatter.string(from: item.createdAt)))
-        return rows
-    }
-
-    /// Name and icon from the recorded bundle ID, via Launch Services and `IconCache`.
-    private var source: (name: String, icon: NSImage)? {
-        IconCache.observeStyle()
-        guard let bundleID = item.sourceBundleID,
-            let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
-        else { return nil }
-        return (url.deletingPathExtension().lastPathComponent, IconCache.icon(forFile: url.path))
-    }
-
-    private func loadDetails() async {
-        let text = item.text
-        let url = imageURL
-        details = await Task.detached(priority: .userInitiated) {
-            var details = Details()
-            if let text {
-                details.characters = text.count
-                details.words = Self.wordCount(text)
-            }
-            if let url {
-                details.pixelSize = ImageThumbnail.pixelSize(of: url)
-                details.fileBytes = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
-            }
-            return details
-        }.value
-    }
-
-    /// Single pass: `split(whereSeparator:)` allocates per word, which a multi-MB copy feels.
-    private nonisolated static func wordCount(_ text: String) -> Int {
-        var count = 0
-        var inWord = false
-        for scalar in text.unicodeScalars {
-            let separator = CharacterSet.whitespacesAndNewlines.contains(scalar)
-            if !separator && !inWord { count += 1 }
-            inWord = !separator
-        }
-        return count
     }
 }

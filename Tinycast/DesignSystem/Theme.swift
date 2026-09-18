@@ -121,6 +121,10 @@ enum Theme {
         /// The uninstall list's leading checkbox / lock glyph.
         static let checkbox: CGFloat = 16
         static let clipboardListWidth: CGFloat = 290
+        static let clipboardPanelHeight: CGFloat = 360
+        static let clipboardCardWidth: CGFloat = 260
+        static let clipboardSearchWidth: CGFloat = 280
+        static let clipboardThumbnailPixels: CGFloat = 520
         static let emojiCell: CGFloat = 56
         static let menuWidth: CGFloat = 276
         /// The clipboard type filter's menu; `menuWidth` is far too wide for five short rows.
@@ -284,6 +288,8 @@ enum Theme {
         static let destructive = Color.red
         /// Success tint: the leading glyph of a `.success` dialog.
         static let success = Color.green
+        static let clipboardText = adaptive(dark: .systemGreen, light: .systemGreen)
+        static let clipboardImage = adaptive(dark: .systemOrange, light: .systemOrange)
     }
 }
 
